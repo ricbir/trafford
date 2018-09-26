@@ -2,7 +2,7 @@ package uk.ac.manchester.trafford.network;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 
-import util.Convert;
+import uk.ac.manchester.trafford.util.Convert;
 
 public class Edge extends DefaultWeightedEdge {
 

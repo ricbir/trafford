@@ -4,7 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import util.Convert;
+import uk.ac.manchester.trafford.util.Convert;
 
 public class ConvertTest {
 

@@ -9,7 +9,7 @@ import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 
 import uk.ac.manchester.trafford.exceptions.NodeNotFoundException;
 import uk.ac.manchester.trafford.exceptions.PathNotFoundException;
-import util.Convert;
+import uk.ac.manchester.trafford.util.Convert;
 
 public abstract class RoadNetwork {
 	public static enum Type {
