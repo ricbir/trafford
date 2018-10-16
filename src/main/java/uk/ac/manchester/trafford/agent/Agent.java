@@ -31,8 +31,10 @@ public class Agent {
 	private EdgePosition target;
 
 	// private List<Agent> watchlist = new ArrayList<>(5);
-	private Agent next = null;
+	private Agent leader = null;
 	private Set<Agent> subscribers = new HashSet<>();
+	private Set<Agent> subscribersRemoveSet = new HashSet<>();
+	private Set<Agent> subscribersAddSet = new HashSet<>();
 
 	/** Current speed in m/s */
 	private double speed;
@@ -53,7 +55,6 @@ public class Agent {
 
 	private State state;
 
-	private boolean shouldUpdateNextAgent = true;
 	private boolean shouldUpdatePath = true;
 
 	GraphPath<Point, Edge> path;
@@ -69,7 +70,6 @@ public class Agent {
 		this.network = network;
 		this.source = source;
 		this.target = target;
-		this.shouldUpdateNextAgent = true;
 		this.shouldUpdatePath = true;
 		this.state = State.AT_SOURCE;
 		this.currentEdge = source.getEdge();
@@ -90,6 +90,8 @@ public class Agent {
 	 * @throws PathNotFoundException
 	 */
 	public void move() throws AlreadyAtDestinationException, PathNotFoundException, NodeNotFoundException {
+		updateSubscribers();
+
 		if (state == State.AT_DESTINATION) {
 			throw new AlreadyAtDestinationException(this);
 		}
@@ -97,16 +99,14 @@ public class Agent {
 		if (state == State.AT_SOURCE) {
 			if (currentEdge.join(this, distanceOnCurrentEdge)) {
 				state = State.TRAVELLING;
-				nextEdge.subscribe(this);
-				executeUpdateNextAgent();
 				LOGGER.fine(
 						"Agent " + this + " has joined edge " + currentEdge + " at position " + distanceOnCurrentEdge);
 			}
 			return;
 		}
 
-		if (shouldUpdateNextAgent) {
-			executeUpdateNextAgent();
+		if (nextEdge != null && (leader == null || leader.currentEdge != currentEdge)) {
+			setLeader(nextEdge.getLastAgent());
 		}
 
 		if (shouldUpdatePath) {
@@ -127,6 +127,9 @@ public class Agent {
 			} catch (AgentNotOnEdgeException e) {
 				LOGGER.warning(e.getMessage());
 			}
+			for (Agent subscriber : subscribers) {
+				subscriber.leaderLeavingEdge(this);
+			}
 			LOGGER.fine("Agent " + this + " has reached its destination");
 			return;
 		}
@@ -134,9 +137,6 @@ public class Agent {
 		if (distanceOnCurrentEdge > currentEdge.getLength()) {
 			distanceOnCurrentEdge -= currentEdge.getLength();
 			changeEdge();
-			for (Agent subscriber : subscribers) {
-				subscriber.updateNextAgent();
-			}
 		}
 	}
 
@@ -156,11 +156,16 @@ public class Agent {
 			LOGGER.warning(e.getMessage());
 		}
 		currentEdge = nextEdge;
-		currentEdge.enter(this);
+		try {
+			currentEdge.enter(this);
+		} catch (NullPointerException e) {
+			LOGGER.severe(debugString());
+		}
 
 		nextEdge = edgeIterator.hasNext() ? edgeIterator.next() : null;
-		if (nextEdge != null) {
-			nextEdge.subscribe(this);
+
+		for (Agent subscriber : subscribers) {
+			subscriber.leaderLeavingEdge(this);
 		}
 	}
 
@@ -173,11 +178,11 @@ public class Agent {
 	private double calculateSpeedDelta() {
 		double freeRoadTerm = 1 - Math.pow(speed / maxSpeed, 4);
 		double interactionTerm = 0;
-		if (next != null) {
-			double distance = getDistance(next);
+		if (leader != null) {
+			double distance = getDistance(leader);
 			if (distance < speed * 5) {
 				interactionTerm = Math.pow((Constants.MINIMUM_SPACING + speed * Constants.DESIRED_TIME_HEADWAY
-						+ (speed * (speed - next.speed)) / (2 * Math.sqrt(maxAcceleration * breakingDeceleration)))
+						+ (speed * (speed - leader.speed)) / (2 * Math.sqrt(maxAcceleration * breakingDeceleration)))
 						/ distance, 2);
 			}
 		}
@@ -195,28 +200,42 @@ public class Agent {
 		return Integer.MAX_VALUE;
 	}
 
-	public void executeUpdateNextAgent() {
-		if (next != null) {
-			next.subscribers.remove(this);
-			LOGGER.fine(this + " unsubscribed from " + next);
-		}
-		try {
-			if ((next = currentEdge.getFollowingAgent(this)) == null && nextEdge != null) {
-				next = nextEdge.getLastAgent();
+	public void leaderLeavingEdge(Agent agent) {
+		if (leader == agent) {
+			if (nextEdge != null) {
+				setLeader(nextEdge.getLastAgent());
+			} else {
+				setLeader(null);
 			}
-		} catch (AgentNotOnEdgeException e) {
-			LOGGER.warning(e.getMessage());
 		}
-		if (next != null) {
-			next.subscribers.add(this);
-			LOGGER.fine(this + " subscribed to " + next);
-		}
-
-		shouldUpdateNextAgent = false;
 	}
 
-	public void updateNextAgent() {
-		shouldUpdateNextAgent = true;
+	public void setLeader(Agent agent) {
+		if (leader != agent) {
+			if (leader != null) {
+				leader.unsubscribe(this);
+			}
+			leader = agent;
+			if (leader != null) {
+				leader.subscribe(this);
+			}
+		}
+	}
+
+	private void subscribe(Agent agent) {
+		subscribersAddSet.add(agent);
+	}
+
+	private void unsubscribe(Agent agent) {
+		subscribersRemoveSet.add(agent);
+	}
+
+	private void updateSubscribers() {
+		subscribers.removeAll(subscribersRemoveSet);
+		subscribersRemoveSet.clear();
+
+		subscribers.addAll(subscribersAddSet);
+		subscribersAddSet.clear();
 	}
 
 	private void executeUpdatePath() throws PathNotFoundException, NodeNotFoundException {

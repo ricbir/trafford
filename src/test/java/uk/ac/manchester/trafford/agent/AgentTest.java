@@ -78,8 +78,6 @@ public class AgentTest {
 		agent.move();
 
 		verify(edge1).join(agent, 0);
-		verify(edge2).subscribe(agent);
-		verify(edge1).getFollowingAgent(agent);
 		verify(edge2).getLastAgent();
 	}
 
@@ -93,12 +91,8 @@ public class AgentTest {
 		reset(edge1);
 		reset(edge2);
 
-		when(edge1.getFollowingAgent(agent)).thenReturn(leader);
-
-		agent.updateNextAgent();
 		agent.move();
 
-		verify(edge1).getFollowingAgent(agent);
 		verify(edge2, never()).getLastAgent();
 	}
 
@@ -114,10 +108,8 @@ public class AgentTest {
 
 		when(edge2.getLastAgent()).thenReturn(leader);
 
-		agent.updateNextAgent();
 		agent.move();
 
-		verify(edge1).getFollowingAgent(agent);
 		verify(edge2).getLastAgent();
 	}
 
@@ -139,7 +131,6 @@ public class AgentTest {
 	public void testMoveToNextEdge() throws Exception {
 		agent = new Agent(network, start, destination, AGENT_SPEED);
 		Agent follower = spy(new Agent(network, start, destination, AGENT_SPEED));
-		when(edge1.getFollowingAgent(follower)).thenReturn(agent);
 
 		agent.move();
 		follower.move();
@@ -150,7 +141,6 @@ public class AgentTest {
 
 		verify(edge1).exit(agent);
 		verify(edge2).enter(agent);
-		verify(follower).updateNextAgent();
 
 	}
 
@@ -158,9 +148,6 @@ public class AgentTest {
 	public void testMoveFollowing() throws Exception {
 		agent = new Agent(network, start, destination, AGENT_SPEED / 10);
 		Agent follower = spy(new Agent(network, start, destination, AGENT_SPEED));
-
-		when(edge1.getFollowingAgent(follower)).thenReturn(agent);
-		follower.updateNextAgent();
 
 		for (int i = 0; i < 100; i++) {
 			agent.move();

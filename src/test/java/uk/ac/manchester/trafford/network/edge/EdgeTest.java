@@ -69,27 +69,6 @@ public class EdgeTest {
 	}
 
 	@Test
-	public void testGetFollowingAgent() {
-		try {
-			edge.getFollowingAgent(agent1);
-			fail("AgentNotOnEdgeException not thrown");
-		} catch (AgentNotOnEdgeException e) {
-
-		}
-
-		try {
-			edge.enter(agent1);
-			assertNull(edge.getFollowingAgent(agent1));
-			edge.enter(agent2);
-			assertNull(edge.getFollowingAgent(agent1));
-			assertSame(agent1, edge.getFollowingAgent(agent2));
-		} catch (AgentNotOnEdgeException e) {
-			e.printStackTrace();
-			fail(e.getMessage());
-		}
-	}
-
-	@Test
 	public void testGetLastAgent() {
 		assertNull(edge.getLastAgent());
 		edge.enter(agent1);

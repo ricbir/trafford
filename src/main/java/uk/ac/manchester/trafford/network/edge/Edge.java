@@ -1,11 +1,7 @@
 package uk.ac.manchester.trafford.network.edge;
 
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.ListIterator;
-import java.util.NoSuchElementException;
-import java.util.Set;
 import java.util.logging.Logger;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
@@ -22,7 +18,6 @@ public class Edge extends DefaultWeightedEdge {
 	private final double length;
 	private double speedLimit = 200;
 
-	private Set<Agent> subscribers = new HashSet<>();
 	private LinkedList<Agent> agents = new LinkedList<>();
 
 	Edge(double length) {
@@ -37,10 +32,6 @@ public class Edge extends DefaultWeightedEdge {
 	public void enter(Agent agent) {
 		LOGGER.fine("Agent " + agent + " entering edge " + this);
 		agents.add(agent);
-		subscribers.remove(agent);
-		for (Agent subscriber : subscribers) {
-			subscriber.updateNextAgent();
-		}
 	}
 
 	/**
@@ -65,28 +56,19 @@ public class Edge extends DefaultWeightedEdge {
 	public boolean join(Agent agent, double distanceFromLaneStart) {
 		ListIterator<Agent> listIterator = agents.listIterator(agents.size());
 		while (listIterator.hasPrevious()) {
-			if (listIterator.previous().getGraphPosition().getDistance() < distanceFromLaneStart) {
+			Agent follower = null;
+			if ((follower = listIterator.previous()).getGraphPosition().getDistance() < distanceFromLaneStart) {
+				follower.setLeader(agent);
+				listIterator.next();
 				listIterator.add(agent);
-				subscribers.remove(agent);
-				if (listIterator.hasPrevious()) {
-					listIterator.previous().updateNextAgent();
+				if (listIterator.hasNext()) {
+					agent.setLeader(listIterator.next());
 				}
 				return true;
 			}
 		}
 		enter(agent);
 		return true;
-	}
-
-	public Agent getFollowingAgent(Agent agent) throws AgentNotOnEdgeException {
-		Iterator<Agent> iterator = agents.descendingIterator();
-		try {
-			while (iterator.next() != agent)
-				;
-		} catch (NoSuchElementException e) {
-			throw new AgentNotOnEdgeException(agent, this);
-		}
-		return iterator.hasNext() ? iterator.next() : null;
 	}
 
 	/**
@@ -109,10 +91,6 @@ public class Edge extends DefaultWeightedEdge {
 
 	protected void setSpeedLimit(double speedLimit) {
 		this.speedLimit = speedLimit;
-	}
-
-	public void subscribe(Agent agent) {
-		subscribers.add(agent);
 	}
 
 	public Agent getLastAgent() {

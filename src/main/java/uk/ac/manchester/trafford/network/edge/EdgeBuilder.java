@@ -16,13 +16,13 @@ public class EdgeBuilder {
 		this.roadNetworkBuilder = roadNetworkBuilder;
 	}
 
-	public EdgeBuilder from(int x, int y) {
-		from = new Point(x, y);
+	public EdgeBuilder from(Point point) {
+		from = point;
 		return this;
 	}
 
-	public EdgeBuilder to(int x, int y) {
-		to = new Point(x, y);
+	public EdgeBuilder to(Point point) {
+		to = point;
 		return this;
 	}
 
