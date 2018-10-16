@@ -1,28 +1,32 @@
 package uk.ac.manchester.trafford.network;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.mockito.Mockito.when;
 
-import org.jgrapht.Graph;
-import org.jgrapht.GraphPath;
-import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
+import uk.ac.manchester.trafford.agent.Agent;
 import uk.ac.manchester.trafford.exceptions.NodeNotFoundException;
-import uk.ac.manchester.trafford.exceptions.PathNotFoundException;
-import uk.ac.manchester.trafford.network.RoadNetwork.Type;
+import uk.ac.manchester.trafford.network.edge.Edge;
+import uk.ac.manchester.trafford.network.edge.EdgePosition;
 
 public class RoadNetworkTest {
-
 	private RoadNetwork network;
-	private Graph<Node, Edge> graph;
+
+	@Mock
+	Agent agent;
+
+	@Mock
+	Edge edge;
 
 	@Before
 	public void setUp() throws Exception {
-		graph = new DefaultDirectedWeightedGraph<>(Edge.class);
-		network = new TestNetwork(Type.Custom, graph);
+		MockitoAnnotations.initMocks(this);
+		network = new RoadNetwork();
 	}
 
 	@After
@@ -30,93 +34,44 @@ public class RoadNetworkTest {
 	}
 
 	@Test
-	public void testShortestPath() throws NodeNotFoundException {
-		network.addNode("source");
-		network.addNode("a0");
-		network.addNode("a1");
-		network.addNode("a2");
-		network.addNode("a3");
-		network.addNode("a4");
-		network.addNode("b0");
-		network.addNode("b1");
-		network.addNode("b2");
-		network.addNode("b3");
-		network.addNode("b4");
-		network.addNode("target");
+	public void testGetCoordinatesDiagonal() throws NodeNotFoundException {
+		Point source = new Point(0, 0);
+		Point target = new Point(200, 200);
+		network.addVertex(source);
+		network.addVertex(target);
+		network.addEdge(source, target, edge);
 
-		network.addEdge("source", "a0", 100, 30);
-		network.addEdge("a0", "a1", 100, 30);
-		network.addEdge("a1", "a2", 100, 30);
-		network.addEdge("a2", "a3", 100, 30);
-		network.addEdge("a3", "a4", 100, 30);
-		network.addEdge("a4", "target", 100, 30);
-		network.addEdge("source", "b0", 10, 30);
-		network.addEdge("b0", "b1", 10, 50);
-		network.addEdge("b1", "b2", 10, 50);
-		network.addEdge("b2", "b3", 10, 50);
-		network.addEdge("b3", "b4", 10, 50);
-		network.addEdge("b4", "target", 10, 50);
+		when(agent.getGraphPosition()).thenReturn(new EdgePosition(edge, Math.sqrt(2)));
+		when(edge.getLength()).thenReturn(source.distance(target) / 100.);
 
-		GraphPath<Node, Edge> path = null;
-		try {
-			path = network.findPath("source", "target");
-		} catch (PathNotFoundException e) {
-			fail(e.getMessage());
-		}
-
-		// TODO test this in a better way
-		assertEquals("[(source : b0), (b0 : b1), (b1 : b2), (b2 : b3), (b3 : b4), (b4 : target)]",
-				path.getEdgeList().toString());
-
+		assertEquals(new Point(100, 100), network.getCoordinates(agent));
 	}
 
 	@Test
-	public void testFastestPath() throws NodeNotFoundException {
-		network.addNode("source");
-		network.addNode("a0");
-		network.addNode("a1");
-		network.addNode("a2");
-		network.addNode("a3");
-		network.addNode("a4");
-		network.addNode("b0");
-		network.addNode("b1");
-		network.addNode("b2");
-		network.addNode("b3");
-		network.addNode("b4");
-		network.addNode("target");
+	public void testGetCoordinatesXAxis() throws NodeNotFoundException {
+		Point source = new Point(0, 0);
+		Point target = new Point(200, 0);
+		network.addVertex(source);
+		network.addVertex(target);
+		network.addEdge(source, target, edge);
 
-		network.addEdge("source", "a0", 100, 90);
-		network.addEdge("a0", "a1", 100, 90);
-		network.addEdge("a1", "a2", 100, 90);
-		network.addEdge("a2", "a3", 100, 90);
-		network.addEdge("a3", "a4", 100, 90);
-		network.addEdge("a4", "target", 100, 90);
-		network.addEdge("source", "b0", 80, 50);
-		network.addEdge("b0", "b1", 80, 50);
-		network.addEdge("b1", "b2", 80, 50);
-		network.addEdge("b2", "b3", 80, 50);
-		network.addEdge("b3", "b4", 80, 50);
-		network.addEdge("b4", "target", 80, 50);
+		when(agent.getGraphPosition()).thenReturn(new EdgePosition(edge, 1));
+		when(edge.getLength()).thenReturn(2.);
 
-		GraphPath<Node, Edge> path = null;
-		try {
-			path = network.findPath("source", "target");
-		} catch (PathNotFoundException e) {
-			fail(e.getMessage());
-		}
-
-		// TODO test this in a better way
-		assertEquals("[(source : a0), (a0 : a1), (a1 : a2), (a2 : a3), (a3 : a4), (a4 : target)]",
-				path.getEdgeList().toString());
-
+		assertEquals(new Point(100, 0), network.getCoordinates(agent));
 	}
 
-	private class TestNetwork extends RoadNetwork {
+	@Test
+	public void testGetCoordinatesYAxis() throws NodeNotFoundException {
+		Point source = new Point(0, 0);
+		Point target = new Point(0, 200);
+		network.addVertex(source);
+		network.addVertex(target);
+		network.addEdge(source, target, edge);
 
-		TestNetwork(Type type, Graph<Node, Edge> graph) {
-			super(type, graph);
-		}
+		when(agent.getGraphPosition()).thenReturn(new EdgePosition(edge, 1));
+		when(edge.getLength()).thenReturn(2.);
 
+		assertEquals(new Point(0, 100), network.getCoordinates(agent));
 	}
-
 }

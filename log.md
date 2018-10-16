@@ -1,5 +1,10 @@
 # Project log
 
+## Sources
+1. Reciprocal Velocity Obstacles - http://gamma.cs.unc.edu/RVO/
+2. Sweep and Prune - http://www.codercorner.com/SAP.pdf
+3. Game loop - http://www.java-gaming.org/index.php?topic=24220.0
+
 ## Iterations
 
 ### Iteration 1

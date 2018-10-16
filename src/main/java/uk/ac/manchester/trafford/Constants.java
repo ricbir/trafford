@@ -1,20 +1,24 @@
 package uk.ac.manchester.trafford;
 
-import uk.ac.manchester.trafford.util.Convert;
-
 public class Constants {
-	public static final int TICKS_PER_SECOND = 50;
+	public static final int UPDATES_PER_SECOND = 30;
+	public static final int RENDERS_PER_SECOND = 30;
 
 	public static final double SPATIAL_SENSITIVITY = 0.0005;
 
 	public static final double AGENT_DISTANCE = 1;
-	/** Agent acceleration in mm/s^2 */
-	public static final int AGENT_ACCELERATION_MMS2 = 4000;
-	/** Agent deceleration in mm/s^2 */
-	public static final int AGENT_DECELERATION_MMS2 = 7000;
-	/** Agent maximum speed in km/h */
-	private static final int AGENT_MAX_SPEED_KMH = 50;
-	/** Agent maximum speed in mm/s */
-	public static final int AGENT_MAX_SPEED_MMS = Convert.metersToMillimeters(Convert.kmphToMps(AGENT_MAX_SPEED_KMH));
+	/** Agent acceleration in m/s^2 */
+	public static final double AGENT_ACCELERATION = 4;
+	/** Agent deceleration in m/s^2 */
+	public static final double AGENT_DECELERATION = 5;
+	/** One second, in nanoseconds */
+	public static final int NANOSECONDS_PER_SECOND = 1_000_000_000;
+
+	public static final double MINIMUM_SPACING = 0.5;
+	public static final double DESIRED_TIME_HEADWAY = 1;
+
+	public static final double LANE_WIDTH = 3;
+
+	public static final double RENDER_SCALING_FACTOR = 0.1;
 
 }

@@ -1,143 +1,171 @@
 package uk.ac.manchester.trafford.agent;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
-import org.jgrapht.graph.DefaultDirectedGraph;
+import org.jgrapht.GraphPath;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import uk.ac.manchester.trafford.Constants;
-import uk.ac.manchester.trafford.exceptions.NodeNotFoundException;
-import uk.ac.manchester.trafford.exceptions.PathNotFoundException;
-import uk.ac.manchester.trafford.network.CustomRoadNetwork;
-import uk.ac.manchester.trafford.network.Edge;
-import uk.ac.manchester.trafford.network.GridRoadNetwork;
-import uk.ac.manchester.trafford.network.Node;
+import uk.ac.manchester.trafford.network.Point;
 import uk.ac.manchester.trafford.network.RoadNetwork;
+import uk.ac.manchester.trafford.network.edge.Edge;
+import uk.ac.manchester.trafford.network.edge.EdgePosition;
 
 public class AgentTest {
+	@SuppressWarnings("unused")
 	private static final Logger LOGGER = Logger.getLogger(AgentTest.class.getName());
-
 	private static final double AGENT_SPEED = 10;
 
-	private static RoadNetwork network;
+	@Mock
+	private RoadNetwork network;
+	@Mock
+	private GraphPath<Point, Edge> path;
+
+	@Mock
+	private Edge edge1;
+	@Mock
+	private Edge edge2;
+	@Mock
+	private Edge edge3;
+
+	private List<Edge> edgeList = new ArrayList<>(3);
+	private Set<Edge> edges = new HashSet<>();
 
 	private Agent agent;
-	private Edge edge;
+	EdgePosition start;
+	EdgePosition destination;
 
 	@Before
 	public void setUp() throws Exception {
-		network = new GridRoadNetwork(8, 8, 100, AGENT_SPEED + 5);
+		MockitoAnnotations.initMocks(this);
+		edges.add(edge1);
+		edges.add(edge2);
+		edges.add(edge3);
+
+		for (Edge edge : edges) {
+			when(edge.getLength()).thenReturn(100.);
+			when(edge.join(any(Agent.class), anyDouble())).thenReturn(true);
+		}
+
+		edgeList.add(edge2);
+		when(path.getEdgeList()).thenReturn(edgeList);
+		when(network.getShortestPath(any(), any())).thenReturn(path);
+
+		start = new EdgePosition(edge1, 0);
+		destination = new EdgePosition(edge3, 100);
 	}
 
 	@Test
-	public void testMoveSpeed() throws PathNotFoundException, NodeNotFoundException {
-		agent = new Agent(network, "0.0", "0.1", AGENT_SPEED);
-		assertEquals(0, agent.getDistance(), Constants.SPATIAL_SENSITIVITY);
-		for (int i = 0; i < Constants.TICKS_PER_SECOND; i++) {
+	public void testAgentInitialization() throws Exception {
+		agent = new Agent(network, start, destination, AGENT_SPEED);
+		verify(network).getShortestPath(any(), any());
+		agent.move();
+
+		verify(edge1).join(agent, 0);
+		verify(edge2).subscribe(agent);
+		verify(edge1).getFollowingAgent(agent);
+		verify(edge2).getLastAgent();
+	}
+
+	@Test
+	public void testUpdateNextAgentThisEdge() throws Exception {
+		agent = new Agent(network, start, destination, AGENT_SPEED);
+		Agent leader = new Agent(network, start, destination, AGENT_SPEED);
+		agent.move();
+		leader.move();
+
+		reset(edge1);
+		reset(edge2);
+
+		when(edge1.getFollowingAgent(agent)).thenReturn(leader);
+
+		agent.updateNextAgent();
+		agent.move();
+
+		verify(edge1).getFollowingAgent(agent);
+		verify(edge2, never()).getLastAgent();
+	}
+
+	@Test
+	public void testUpdateNextAgentNextEdge() throws Exception {
+		agent = new Agent(network, start, destination, AGENT_SPEED);
+		Agent leader = new Agent(network, start, destination, AGENT_SPEED);
+		agent.move();
+		leader.move();
+
+		reset(edge1);
+		reset(edge2);
+
+		when(edge2.getLastAgent()).thenReturn(leader);
+
+		agent.updateNextAgent();
+		agent.move();
+
+		verify(edge1).getFollowingAgent(agent);
+		verify(edge2).getLastAgent();
+	}
+
+	@Test
+	public void testMoveNotFollowing() throws Exception {
+		agent = new Agent(network, start, destination, AGENT_SPEED);
+		agent.move();
+		agent.move();
+		assertEquals(new EdgePosition(edge1, 0), agent.getGraphPosition());
+
+		agent.move();
+		assertEquals(
+				new EdgePosition(edge1,
+						Constants.AGENT_ACCELERATION / Constants.UPDATES_PER_SECOND / Constants.UPDATES_PER_SECOND),
+				agent.getGraphPosition());
+	}
+
+	@Test
+	public void testMoveToNextEdge() throws Exception {
+		agent = new Agent(network, start, destination, AGENT_SPEED);
+		Agent follower = spy(new Agent(network, start, destination, AGENT_SPEED));
+		when(edge1.getFollowingAgent(follower)).thenReturn(agent);
+
+		agent.move();
+		follower.move();
+
+		while (agent.getGraphPosition().getEdge() == edge1) {
 			agent.move();
 		}
-		assertEquals(AGENT_SPEED, agent.getDistance(), Constants.SPATIAL_SENSITIVITY);
+
+		verify(edge1).exit(agent);
+		verify(edge2).enter(agent);
+		verify(follower).updateNextAgent();
+
 	}
 
 	@Test
-	public void testMoveToNextEdge() throws PathNotFoundException, NodeNotFoundException {
-		agent = new Agent(network, "0.0", "0.2", AGENT_SPEED);
-		edge = agent.getCurrentEdge();
+	public void testMoveFollowing() throws Exception {
+		agent = new Agent(network, start, destination, AGENT_SPEED / 10);
+		Agent follower = spy(new Agent(network, start, destination, AGENT_SPEED));
 
-		assertEquals(network.getEdge("0.0", "0.1"), agent.getCurrentEdge());
+		when(edge1.getFollowingAgent(follower)).thenReturn(agent);
+		follower.updateNextAgent();
 
-		for (int i = 0; i < Constants.TICKS_PER_SECOND * edge.getLength() / AGENT_SPEED + 1; i++) {
+		for (int i = 0; i < 100; i++) {
 			agent.move();
-		}
-		assertEquals(network.getEdge("0.1", "0.2"), agent.getCurrentEdge());
-		assertTrue(agent.getDistance() < 1);
-	}
-
-	@Test
-	public void testMoveToFollowingNextEdge() throws PathNotFoundException, NodeNotFoundException {
-		agent = new Agent(network, "0.0", "0.3", AGENT_SPEED);
-		edge = agent.getCurrentEdge();
-
-		assertEquals(network.getEdge("0.0", "0.1"), agent.getCurrentEdge());
-
-		for (int i = 0; i < Constants.TICKS_PER_SECOND
-				* (network.getEdge("0.0", "0.1").getLength() + network.getEdge("0.1", "0.2").getLength()) / AGENT_SPEED
-				+ 1; i++) {
-			agent.move();
-		}
-		assertEquals(network.getEdge("0.2", "0.3"), agent.getCurrentEdge());
-		assertTrue(agent.getDistance() < 1);
-	}
-
-	@Test
-	public void testDestinationNotReached() throws PathNotFoundException, NodeNotFoundException {
-		agent = new Agent(network, "0.0", "0.1", AGENT_SPEED);
-		edge = agent.getCurrentEdge();
-
-		assertEquals(0, agent.getDistance(), Constants.SPATIAL_SENSITIVITY);
-
-		for (int i = 0; i < Math.round(Constants.TICKS_PER_SECOND * edge.getLength() / AGENT_SPEED) - 1; i++) {
-			assertFalse("End reached after " + i / Constants.TICKS_PER_SECOND * AGENT_SPEED + " m", agent.move());
+			follower.move();
+			assert (follower.getGraphPosition().getDistance() <= agent.getGraphPosition().getDistance());
 		}
 	}
-
-	@Test
-	public void testDestinationReached() throws PathNotFoundException, NodeNotFoundException {
-		agent = new Agent(network, "0.0", "0.1", AGENT_SPEED);
-		edge = agent.getCurrentEdge();
-
-		assertEquals(0, agent.getDistance(), Constants.SPATIAL_SENSITIVITY);
-
-		for (int i = 0; i < Math.round(Constants.TICKS_PER_SECOND * edge.getLength() / AGENT_SPEED); i++) {
-			agent.move();
-		}
-		assertTrue(agent.move());
-	}
-
-	@Test
-	public void testNodeDoesNotExist() {
-		try {
-			agent = new Agent(network, "0.0", "not_a_node", AGENT_SPEED);
-			fail("Exception not thrown");
-		} catch (NodeNotFoundException e) {
-
-		} catch (Exception e) {
-			fail("Expected " + NodeNotFoundException.class + ", got " + e);
-		}
-	}
-
-	@Test
-	public void testPathNotFound() {
-		DefaultDirectedGraph<Node, Edge> graph = new DefaultDirectedGraph<Node, Edge>(Edge.class);
-		graph.addVertex(new Node("a"));
-		graph.addVertex(new Node("b"));
-		network = new CustomRoadNetwork(graph);
-
-		try {
-			agent = new Agent(network, "a", "b", AGENT_SPEED);
-			fail("Exception not thrown");
-		} catch (PathNotFoundException e) {
-
-		} catch (Exception e) {
-			fail("Expected " + PathNotFoundException.class + ", got " + e);
-		}
-	}
-
-	@Test
-	public void testAchillesAndTheTortoise() throws PathNotFoundException, NodeNotFoundException {
-		Agent tortoise = new Agent("tortoise", network, "0.0", "7.7", AGENT_SPEED / 2);
-		tortoise.move();
-		Agent achilles = new Agent("achilles", network, "0.0", "7.7", AGENT_SPEED);
-
-		while (!tortoise.move()) {
-			assertFalse("Achilles beat the tortoise. Zeno is not impressed.", achilles.move());
-		}
-	}
-
 }

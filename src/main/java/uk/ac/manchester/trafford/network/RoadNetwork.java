@@ -1,120 +1,91 @@
 package uk.ac.manchester.trafford.network;
 
+import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Logger;
 
-import org.jgrapht.Graph;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.interfaces.ShortestPathAlgorithm;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
+import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 
+import uk.ac.manchester.trafford.agent.Agent;
+import uk.ac.manchester.trafford.exceptions.AlreadyAtDestinationException;
 import uk.ac.manchester.trafford.exceptions.NodeNotFoundException;
 import uk.ac.manchester.trafford.exceptions.PathNotFoundException;
-import uk.ac.manchester.trafford.util.Convert;
+import uk.ac.manchester.trafford.network.edge.Edge;
+import uk.ac.manchester.trafford.network.edge.EdgePosition;
 
-public abstract class RoadNetwork {
-	public static enum Type {
-		Grid, Custom
-	}
+@SuppressWarnings("serial")
+public class RoadNetwork extends DefaultDirectedWeightedGraph<Point, Edge> {
+	@SuppressWarnings("unused")
+	private static final Logger LOGGER = Logger.getLogger(RoadNetwork.class.getName());
 
-	private Type type;
-	private Graph<Node, Edge> graph;
+	private Set<Agent> agents = new HashSet<>();
+	private Set<Agent> agentRemoveSet = new HashSet<>();
 
 	/**
 	 * Create a road network of given type and based on a graph.
 	 * 
-	 * @param type
-	 * @param graph
 	 */
-	RoadNetwork(Type type, Graph<Node, Edge> graph) {
-		this.type = type;
-		this.graph = graph;
+	RoadNetwork() {
+		super(Edge.class);
+		for (Edge edge : edgeSet()) {
+			setEdgeWeight(edge, edge.getLength() / edge.getSpeedLimit());
+		}
+	}
+
+	public synchronized void addAgents(Set<Agent> newAgents) {
+		agents.addAll(newAgents);
 	}
 
 	/**
-	 * Get the type of the network.
+	 * Get a snapshot of the agents currently on the network, in the form of an
+	 * array.
 	 * 
-	 * @return The type of the network.
+	 * @return The snapshot.
 	 */
-	public Type getType() {
-		return type;
+	public Agent[] agentSetSnapshot() {
+		return agents.toArray(new Agent[agents.size()]);
 	}
 
-	/**
-	 * Get an edge of the network linking two nodes.
-	 * 
-	 * @param source Source node name.
-	 * @param target Target node name.
-	 * @return The edge.
-	 */
-	public Edge getEdge(String source, String target) {
-		return graph.getEdge(new Node(source), new Node(target));
+	public synchronized void update() {
+		for (Agent agent : agents) {
+			try {
+				agent.move();
+			} catch (AlreadyAtDestinationException e) {
+				agentRemoveSet.add(agent);
+			} catch (PathNotFoundException e) {
+				e.printStackTrace();
+			} catch (NodeNotFoundException e) {
+				e.printStackTrace();
+			}
+		}
+		agents.removeAll(agentRemoveSet);
+		agentRemoveSet.clear();
 	}
 
-	/**
-	 * Add a node to the network.
-	 * 
-	 * @param name Unique name of the node.
-	 */
-	protected void addNode(String name) {
-		graph.addVertex(new Node(name));
+	public Point getCoordinates(Agent agent) {
+		EdgePosition position = agent.getGraphPosition();
+		Edge edge = position.getEdge();
+		if (edge == null) {
+			return null;
+		}
+		double distance = position.getDistance();
+		Point source = getEdgeSource(edge);
+		Point target = getEdgeTarget(edge);
+
+		return new Point(
+				(int) Math.round(distance / edge.getLength() * (target.getX() - source.getX()) + source.getX()),
+				(int) Math.round(distance / edge.getLength() * (target.getY() - source.getY()) + source.getY()));
 	}
 
-	/**
-	 * Add a new edge to the network.
-	 * 
-	 * @param source     Name of the source node.
-	 * @param target     Name of the target node.
-	 * @param length     Length of the edge, in meters.
-	 * @param speedLimit Speed limit, in km/h.
-	 */
-	protected void addEdge(String source, String target, double length, double speedLimit) {
-		Edge edge = new Edge(Convert.metersToMillimeters(length), Convert.kmphToMmps(speedLimit));
-		graph.addEdge(new Node(source), new Node(target), edge);
-		graph.setEdgeWeight(edge, length / edge.getSpeedLimit());
-	}
-
-	/**
-	 * Get the set of edges in the network.
-	 * 
-	 * @return The set.
-	 */
-	protected Set<Edge> edgeSet() {
-		return graph.edgeSet();
-	}
-
-	/**
-	 * Get the set of nodes in the network.
-	 * 
-	 * @return The set.
-	 */
-	protected Set<Node> nodeSet() {
-		return graph.vertexSet();
-	}
-
-	/**
-	 * Find a path from one node to another in the network.
-	 * 
-	 * @param source The source node.
-	 * @param target The target node.
-	 * @return
-	 * @throws NodeNotFoundException If either node is not in the graph.
-	 * @throws PathNotFoundException If there is no path linking the two nodes.
-	 */
-	public GraphPath<Node, Edge> findPath(String source, String target)
-			throws NodeNotFoundException, PathNotFoundException {
-		GraphPath<Node, Edge> path;
-
+	public GraphPath<Point, Edge> getShortestPath(Point source, Point target) throws NodeNotFoundException {
+		ShortestPathAlgorithm<Point, Edge> shortestPath = new DijkstraShortestPath<Point, Edge>(this);
 		try {
-			ShortestPathAlgorithm<Node, Edge> shortestPath = new DijkstraShortestPath<Node, Edge>(graph);
-			path = shortestPath.getPath(new Node(source), new Node(target));
+			return shortestPath.getPath(source, target);
 		} catch (IllegalArgumentException e) {
 			throw new NodeNotFoundException(e);
 		}
-
-		if (path == null) {
-			throw new PathNotFoundException();
-		}
-
-		return path;
 	}
 }
