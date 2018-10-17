@@ -1,11 +1,12 @@
 package uk.ac.manchester.trafford.agent;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -48,6 +49,7 @@ public class AgentTest {
 	private Set<Edge> edges = new HashSet<>();
 
 	private Agent agent;
+	private Agent leader;
 	EdgePosition start;
 	EdgePosition destination;
 
@@ -69,48 +71,68 @@ public class AgentTest {
 
 		start = new EdgePosition(edge1, 0);
 		destination = new EdgePosition(edge3, 100);
+
+		agent = new Agent(network, start, destination, AGENT_SPEED);
+		leader = spy(new Agent(network, start, destination, AGENT_SPEED));
 	}
 
 	@Test
 	public void testAgentInitialization() throws Exception {
-		agent = new Agent(network, start, destination, AGENT_SPEED);
-		verify(network).getShortestPath(any(), any());
-		agent.move();
+		verify(network, times(2)).getShortestPath(any(), any());
 
+		agent.move();
 		verify(edge1).join(agent, 0);
+
+		agent.move();
 		verify(edge2).getLastAgent();
 	}
 
 	@Test
-	public void testUpdateNextAgentThisEdge() throws Exception {
-		agent = new Agent(network, start, destination, AGENT_SPEED);
-		Agent leader = new Agent(network, start, destination, AGENT_SPEED);
-		agent.move();
-		leader.move();
+	public void testSetLeader() throws Exception {
+		agent.setLeader(leader);
+		verify(leader, times(1)).subscribe(agent);
 
-		reset(edge1);
-		reset(edge2);
+		agent.setLeader(leader);
+		verify(leader, never()).unsubscribe(agent);
+		verify(leader, times(1)).subscribe(agent);
 
-		agent.move();
+		Agent newLeader = spy(new Agent(network, start, destination, AGENT_SPEED));
+		agent.setLeader(newLeader);
+		verify(leader, times(1)).unsubscribe(agent);
+		verify(newLeader, times(1)).subscribe(agent);
 
-		verify(edge2, never()).getLastAgent();
+		agent.setLeader(null);
+		verify(newLeader, times(1)).unsubscribe(agent);
 	}
 
 	@Test
-	public void testUpdateNextAgentNextEdge() throws Exception {
-		agent = new Agent(network, start, destination, AGENT_SPEED);
-		Agent leader = new Agent(network, start, destination, AGENT_SPEED);
-		agent.move();
-		leader.move();
+	public void testLeaderLeavingEdge() {
+		agent.setLeader(leader);
 
-		reset(edge1);
-		reset(edge2);
+		agent.leaderLeavingEdge(leader);
+		verify(leader).unsubscribe(agent);
+	}
 
-		when(edge2.getLastAgent()).thenReturn(leader);
+	@Test
+	public void testLeaderLeavingEdgeWrongLeader() {
+		agent.setLeader(null);
 
-		agent.move();
+		agent.leaderLeavingEdge(leader);
+		verify(leader, never()).unsubscribe(agent);
+	}
 
-		verify(edge2).getLastAgent();
+	@Test
+	public void testGetDistanceSameEdge() throws Exception {
+		leader = new Agent(network, new EdgePosition(start.getEdge(), start.getDistance() + 10), destination,
+				AGENT_SPEED);
+		assertEquals(10, agent.getDistance(leader), 0.05);
+	}
+
+	@Test
+	public void testGetDistanceNextEdge() throws Exception {
+		leader = new Agent(network, new EdgePosition(edge2, 10), destination, AGENT_SPEED);
+		when(edge1.getLength()).thenReturn(100.);
+		assertEquals(110, agent.getDistance(leader), 0.05);
 	}
 
 	@Test
@@ -129,30 +151,44 @@ public class AgentTest {
 
 	@Test
 	public void testMoveToNextEdge() throws Exception {
-		agent = new Agent(network, start, destination, AGENT_SPEED);
-		Agent follower = spy(new Agent(network, start, destination, AGENT_SPEED));
-
+		leader.move();
 		agent.move();
-		follower.move();
 
-		while (agent.getGraphPosition().getEdge() == edge1) {
-			agent.move();
+		while (leader.getGraphPosition().getEdge() == edge1) {
+			leader.move();
 		}
 
-		verify(edge1).exit(agent);
-		verify(edge2).enter(agent);
+		verify(edge1).exit(leader);
+		verify(edge2).enter(leader);
 
 	}
 
 	@Test
 	public void testMoveFollowing() throws Exception {
-		agent = new Agent(network, start, destination, AGENT_SPEED / 10);
-		Agent follower = spy(new Agent(network, start, destination, AGENT_SPEED));
+		leader = new Agent(network, start, destination, AGENT_SPEED / 10);
+		agent.setLeader(leader);
 
 		for (int i = 0; i < 100; i++) {
+			leader.move();
 			agent.move();
-			follower.move();
-			assert (follower.getGraphPosition().getDistance() <= agent.getGraphPosition().getDistance());
+			assert (agent.getGraphPosition().getDistance() <= leader.getGraphPosition().getDistance());
+		}
+	}
+
+	@Test
+	public void testKeepMinimumDistance() throws Exception {
+		leader = new Agent(network, new EdgePosition(start.getEdge(), start.getDistance() + 10), destination, 0);
+		agent.setLeader(leader);
+
+		for (int i = 0; i < 500; i++) {
+			agent.move();
+			double agentDistance = agent.getGraphPosition().getDistance();
+			double leaderDistance = leader.getGraphPosition().getDistance();
+			double distanceBetweenAgents = leaderDistance - agentDistance;
+			assertTrue(
+					"Follower position: " + agentDistance + ", leader position: " + leaderDistance + ", distance: "
+							+ distanceBetweenAgents + " > " + Constants.MINIMUM_SPACING,
+					distanceBetweenAgents > Constants.MINIMUM_SPACING);
 		}
 	}
 }

@@ -6,7 +6,6 @@ public class Constants {
 
 	public static final double SPATIAL_SENSITIVITY = 0.0005;
 
-	public static final double AGENT_DISTANCE = 1;
 	/** Agent acceleration in m/s^2 */
 	public static final double AGENT_ACCELERATION = 4;
 	/** Agent deceleration in m/s^2 */
@@ -14,7 +13,12 @@ public class Constants {
 	/** One second, in nanoseconds */
 	public static final int NANOSECONDS_PER_SECOND = 1_000_000_000;
 
-	public static final double MINIMUM_SPACING = 0.5;
+	/** Minimum space between agents, in meters */
+	public static final double MINIMUM_SPACING = 2;
+	/**
+	 * Time headway (i.e. the time it would take an agent to reach its leader)
+	 * between agents, in seconds
+	 */
 	public static final double DESIRED_TIME_HEADWAY = 1;
 
 	public static final double LANE_WIDTH = 3;

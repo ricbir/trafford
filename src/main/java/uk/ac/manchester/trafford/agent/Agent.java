@@ -57,8 +57,8 @@ public class Agent {
 
 	private boolean shouldUpdatePath = true;
 
-	GraphPath<Point, Edge> path;
-	Iterator<Edge> edgeIterator;
+	private GraphPath<Point, Edge> path;
+	private Iterator<Edge> edgeIterator;
 
 	public Agent(String name, RoadNetwork network, EdgePosition source, EdgePosition target, double maxSpeed)
 			throws PathNotFoundException, NodeNotFoundException {
@@ -113,8 +113,8 @@ public class Agent {
 			executeUpdatePath();
 		}
 
-		updatePosition();
 		updateSpeed();
+		updatePosition();
 	}
 
 	private void updatePosition() {
@@ -142,6 +142,7 @@ public class Agent {
 
 	private void updateSpeed() {
 		speed += calculateSpeedDelta();
+		// Avoid "bounce back" effect
 		if (speed < 0) {
 			speed = 0;
 		}
@@ -180,7 +181,7 @@ public class Agent {
 		double interactionTerm = 0;
 		if (leader != null) {
 			double distance = getDistance(leader);
-			if (distance < speed * 5) {
+			if (distance < speed * 5 || distance < Constants.MINIMUM_SPACING * 5) {
 				interactionTerm = Math.pow((Constants.MINIMUM_SPACING + speed * Constants.DESIRED_TIME_HEADWAY
 						+ (speed * (speed - leader.speed)) / (2 * Math.sqrt(maxAcceleration * breakingDeceleration)))
 						/ distance, 2);
@@ -189,7 +190,7 @@ public class Agent {
 		return maxAcceleration * (freeRoadTerm - interactionTerm) / Constants.UPDATES_PER_SECOND;
 	}
 
-	private double getDistance(Agent a) {
+	protected double getDistance(Agent a) {
 		if (currentEdge == a.currentEdge) {
 			return a.distanceOnCurrentEdge - distanceOnCurrentEdge;
 		}
@@ -200,7 +201,7 @@ public class Agent {
 		return Integer.MAX_VALUE;
 	}
 
-	public void leaderLeavingEdge(Agent agent) {
+	protected void leaderLeavingEdge(Agent agent) {
 		if (leader == agent) {
 			if (nextEdge != null) {
 				setLeader(nextEdge.getLastAgent());
@@ -222,11 +223,11 @@ public class Agent {
 		}
 	}
 
-	private void subscribe(Agent agent) {
+	protected void subscribe(Agent agent) {
 		subscribersAddSet.add(agent);
 	}
 
-	private void unsubscribe(Agent agent) {
+	protected void unsubscribe(Agent agent) {
 		subscribersRemoveSet.add(agent);
 	}
 
