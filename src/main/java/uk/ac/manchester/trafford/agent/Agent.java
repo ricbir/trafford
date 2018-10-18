@@ -136,6 +136,9 @@ public class Agent {
 
 		if (distanceOnCurrentEdge > currentEdge.getLength()) {
 			distanceOnCurrentEdge -= currentEdge.getLength();
+			if (nextEdge != null) {
+				setLeader(nextEdge.getLastAgent());
+			}
 			changeEdge();
 		}
 	}
@@ -259,13 +262,17 @@ public class Agent {
 		shouldUpdatePath = false;
 	}
 
+	public Agent getLeader() {
+		return leader;
+	}
+
+	public EdgePosition getEdgePosition() {
+		return new EdgePosition(currentEdge, distanceOnCurrentEdge);
+	}
+
 	@Override
 	public String toString() {
 		return name;
-	}
-
-	public EdgePosition getGraphPosition() {
-		return new EdgePosition(currentEdge, distanceOnCurrentEdge);
 	}
 
 	public String debugString() {

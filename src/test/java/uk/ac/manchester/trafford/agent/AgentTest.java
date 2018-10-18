@@ -140,13 +140,13 @@ public class AgentTest {
 		agent = new Agent(network, start, destination, AGENT_SPEED);
 		agent.move();
 		agent.move();
-		assertEquals(new EdgePosition(edge1, 0), agent.getGraphPosition());
+		assertEquals(new EdgePosition(edge1, 0), agent.getEdgePosition());
 
 		agent.move();
 		assertEquals(
 				new EdgePosition(edge1,
 						Constants.AGENT_ACCELERATION / Constants.UPDATES_PER_SECOND / Constants.UPDATES_PER_SECOND),
-				agent.getGraphPosition());
+				agent.getEdgePosition());
 	}
 
 	@Test
@@ -154,7 +154,7 @@ public class AgentTest {
 		leader.move();
 		agent.move();
 
-		while (leader.getGraphPosition().getEdge() == edge1) {
+		while (leader.getEdgePosition().getEdge() == edge1) {
 			leader.move();
 		}
 
@@ -171,7 +171,7 @@ public class AgentTest {
 		for (int i = 0; i < 100; i++) {
 			leader.move();
 			agent.move();
-			assert (agent.getGraphPosition().getDistance() <= leader.getGraphPosition().getDistance());
+			assert (agent.getEdgePosition().getDistance() <= leader.getEdgePosition().getDistance());
 		}
 	}
 
@@ -182,8 +182,8 @@ public class AgentTest {
 
 		for (int i = 0; i < 500; i++) {
 			agent.move();
-			double agentDistance = agent.getGraphPosition().getDistance();
-			double leaderDistance = leader.getGraphPosition().getDistance();
+			double agentDistance = agent.getEdgePosition().getDistance();
+			double leaderDistance = leader.getEdgePosition().getDistance();
 			double distanceBetweenAgents = leaderDistance - agentDistance;
 			assertTrue(
 					"Follower position: " + agentDistance + ", leader position: " + leaderDistance + ", distance: "

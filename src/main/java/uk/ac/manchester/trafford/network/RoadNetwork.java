@@ -63,10 +63,13 @@ public class RoadNetwork extends DefaultDirectedWeightedGraph<Point, Edge> {
 		}
 		agents.removeAll(agentRemoveSet);
 		agentRemoveSet.clear();
+		for (Edge edge : edgeSet()) {
+			edge.checkListIntegrity();
+		}
 	}
 
 	public Point getCoordinates(Agent agent) {
-		EdgePosition position = agent.getGraphPosition();
+		EdgePosition position = agent.getEdgePosition();
 		Edge edge = position.getEdge();
 		if (edge == null) {
 			return null;

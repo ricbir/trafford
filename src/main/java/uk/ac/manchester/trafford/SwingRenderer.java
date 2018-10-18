@@ -89,14 +89,6 @@ public class SwingRenderer extends JFrame implements Renderer {
 					g.fillRect(scale(point.getX()) - 1, scale(point.getY()) - 1, 2, 2);
 				}
 			}
-
-			g.setColor(Color.BLACK);
-
-			int listPos = 800;
-			for (Agent agent : agentSetSnapshot) {
-				g.drawString(agent.debugString(), 100, listPos);
-				listPos += 20;
-			}
 		}
 
 		private int scale(int position) {

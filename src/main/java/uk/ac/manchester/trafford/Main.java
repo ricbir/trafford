@@ -30,15 +30,17 @@ public class Main {
 		edges = network.edgeSet().toArray(edges);
 
 		while (true) {
-			int startEdgeIndex = (int) (Math.random() * edges.length);
-			int destinationEdgeIndex;
-			do {
-				destinationEdgeIndex = (int) (Math.random() * edges.length);
-			} while (destinationEdgeIndex == startEdgeIndex);
+			if (network.agentSetSnapshot().length < 200) {
+				int startEdgeIndex = (int) (Math.random() * edges.length);
+				int destinationEdgeIndex;
+				do {
+					destinationEdgeIndex = (int) (Math.random() * edges.length);
+				} while (destinationEdgeIndex == startEdgeIndex);
 
-			controller.addAgent(new EdgePosition(edges[startEdgeIndex], edges[startEdgeIndex].getLength() / 2),
-					new EdgePosition(edges[destinationEdgeIndex], edges[destinationEdgeIndex].getLength() / 2),
-					Math.random() * 20 + 10);
+				controller.addAgent(new EdgePosition(edges[startEdgeIndex], edges[startEdgeIndex].getLength() / 2),
+						new EdgePosition(edges[destinationEdgeIndex], edges[destinationEdgeIndex].getLength() / 2),
+						Math.random() * 20 + 10);
+			}
 			Thread.sleep(50);
 		}
 	}

@@ -41,7 +41,7 @@ public class RoadNetworkTest {
 		network.addVertex(target);
 		network.addEdge(source, target, edge);
 
-		when(agent.getGraphPosition()).thenReturn(new EdgePosition(edge, Math.sqrt(2)));
+		when(agent.getEdgePosition()).thenReturn(new EdgePosition(edge, Math.sqrt(2)));
 		when(edge.getLength()).thenReturn(source.distance(target) / 100.);
 
 		assertEquals(new Point(100, 100), network.getCoordinates(agent));
@@ -55,7 +55,7 @@ public class RoadNetworkTest {
 		network.addVertex(target);
 		network.addEdge(source, target, edge);
 
-		when(agent.getGraphPosition()).thenReturn(new EdgePosition(edge, 1));
+		when(agent.getEdgePosition()).thenReturn(new EdgePosition(edge, 1));
 		when(edge.getLength()).thenReturn(2.);
 
 		assertEquals(new Point(100, 0), network.getCoordinates(agent));
@@ -69,7 +69,7 @@ public class RoadNetworkTest {
 		network.addVertex(target);
 		network.addEdge(source, target, edge);
 
-		when(agent.getGraphPosition()).thenReturn(new EdgePosition(edge, 1));
+		when(agent.getEdgePosition()).thenReturn(new EdgePosition(edge, 1));
 		when(edge.getLength()).thenReturn(2.);
 
 		assertEquals(new Point(0, 100), network.getCoordinates(agent));

@@ -50,22 +50,26 @@ public class Edge extends DefaultWeightedEdge {
 	 * Try to join this edge at a certain distance.
 	 * 
 	 * @param agent
-	 * @param distanceFromLaneStart
+	 * @param distanceFromEdgeStart
 	 * @return Whether or not the operation was successful.
 	 */
-	public boolean join(Agent agent, double distanceFromLaneStart) {
-		ListIterator<Agent> listIterator = agents.listIterator(agents.size());
-		while (listIterator.hasPrevious()) {
+	public boolean join(Agent agent, double distanceFromEdgeStart) {
+		ListIterator<Agent> listIterator = agents.listIterator();
+		while (listIterator.hasNext()) {
 			Agent follower = null;
-			if ((follower = listIterator.previous()).getGraphPosition().getDistance() < distanceFromLaneStart) {
+			if ((follower = listIterator.next()).getEdgePosition().getDistance() < distanceFromEdgeStart) {
 				follower.setLeader(agent);
-				listIterator.next();
+				listIterator.previous();
 				listIterator.add(agent);
-				if (listIterator.hasNext()) {
-					agent.setLeader(listIterator.next());
+				listIterator.previous();
+				if (listIterator.hasPrevious()) {
+					agent.setLeader(listIterator.previous());
 				}
 				return true;
 			}
+		}
+		if (listIterator.hasPrevious()) {
+			agent.setLeader(listIterator.previous());
 		}
 		enter(agent);
 		return true;
@@ -95,6 +99,18 @@ public class Edge extends DefaultWeightedEdge {
 
 	public Agent getLastAgent() {
 		return agents.peekLast();
+	}
+
+	public void checkListIntegrity() {
+		Agent lastAgent = null;
+		for (Agent agent : agents) {
+			if (lastAgent != null && lastAgent.getLeader() != agent) {
+				LOGGER.warning("Agent " + agent + " should be leader of agent " + lastAgent + ", but agent "
+						+ lastAgent.getLeader() + " was.");
+				System.out.println("Agent " + agent + " should be leader of agent " + lastAgent + ", but agent "
+						+ lastAgent.getLeader() + " was.");
+			}
+		}
 	}
 
 	@Override
