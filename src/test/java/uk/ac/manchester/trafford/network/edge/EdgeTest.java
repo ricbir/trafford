@@ -18,6 +18,8 @@ import org.mockito.MockitoAnnotations;
 
 import uk.ac.manchester.trafford.agent.Agent;
 import uk.ac.manchester.trafford.exceptions.AgentNotOnEdgeException;
+import uk.ac.manchester.trafford.network.edge.Edge;
+import uk.ac.manchester.trafford.network.edge.EdgePosition;
 
 public class EdgeTest {
 

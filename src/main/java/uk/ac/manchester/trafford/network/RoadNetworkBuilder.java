@@ -1,24 +1,20 @@
 package uk.ac.manchester.trafford.network;
 
-import org.jgrapht.graph.builder.GraphBuilder;
-
 import uk.ac.manchester.trafford.Constants;
 import uk.ac.manchester.trafford.network.edge.Edge;
-import uk.ac.manchester.trafford.network.edge.EdgeBuilder;
+import uk.ac.manchester.trafford.network.edge.TimedTrafficLight;
 import uk.ac.manchester.trafford.util.Convert;
 
-public class RoadNetworkBuilder extends GraphBuilder<Point, Edge, RoadNetwork> {
+public class RoadNetworkBuilder {
+
+	private RoadNetwork network;
 
 	private RoadNetworkBuilder() {
-		super(new RoadNetwork());
+		network = new RoadNetwork();
 	}
 
 	public static RoadNetworkBuilder RoadNetwork() {
 		return new RoadNetworkBuilder();
-	}
-
-	public EdgeBuilder edge() {
-		return new EdgeBuilder(this);
 	}
 
 	private enum XingOffset {
@@ -56,76 +52,78 @@ public class RoadNetworkBuilder extends GraphBuilder<Point, Edge, RoadNetwork> {
 				Point wOut = new Point(x + XingOffset.W_OUT.x, y + XingOffset.W_OUT.y);
 				Point wIn = new Point(x + XingOffset.W_IN.x, y + XingOffset.W_IN.y);
 
+				TimedTrafficLight trafficLight = new TimedTrafficLight(10, 3, 2, network);
+
 				if (y > 0) {
-					edge() //
-							.from(nOut) //
-							.to(new Point(x + XingOffset.S_IN.x, y - lengthCentimeters + XingOffset.S_IN.y)) //
-							.build(); //
-					edge() //
-							.from(new Point(x + XingOffset.S_OUT.x, y - lengthCentimeters + XingOffset.S_OUT.y)) //
-							.to(nIn) //
-							.build(); //
+					Edge.build(nOut, new Point(x + XingOffset.S_IN.x, y - lengthCentimeters + XingOffset.S_IN.y))
+							.addToNetwork(network);
+					Edge.build(new Point(x + XingOffset.S_OUT.x, y - lengthCentimeters + XingOffset.S_OUT.y), nIn)
+							.addToNetwork(network);
 
 					if (y < (rows - 1) * lengthCentimeters) {
-						edge().from(nIn).to(sOut).build();
+						Edge.build(nIn, sOut).accessController(trafficLight.getController(0)).addToNetwork(network);
 					}
 
 					if (x < (columns - 1) * lengthCentimeters) {
-						edge().from(nIn).to(eOut).build();
+						Edge.build(nIn, eOut).accessController(trafficLight.getController(0)).speedLimit(10)
+								.addToNetwork(network);
 					}
 
 					if (x > 0) {
-						edge().from(nIn).to(wOut).build();
+						Edge.build(nIn, wOut).accessController(trafficLight.getController(0)).speedLimit(10)
+								.addToNetwork(network);
 					}
 				}
 				if (x > 0) {
-					edge() //
-							.from(wOut) //
-							.to(new Point(x - lengthCentimeters + XingOffset.E_IN.x, y + XingOffset.E_IN.y)) //
-							.build(); //
-					edge() //
-							.from(new Point(x - lengthCentimeters + XingOffset.E_OUT.x, y + XingOffset.E_OUT.y)) //
-							.to(wIn) //
-							.build(); //
+					Edge.build(wOut, new Point(x - lengthCentimeters + XingOffset.E_IN.x, y + XingOffset.E_IN.y)) //
+							.addToNetwork(network); //
+					Edge.build(new Point(x - lengthCentimeters + XingOffset.E_OUT.x, y + XingOffset.E_OUT.y), wIn) //
+							.addToNetwork(network); //
 
 					if (x < (columns - 1) * lengthCentimeters) {
-						edge().from(wIn).to(eOut).build();
+						Edge.build(wIn, eOut).accessController(trafficLight.getController(1)).addToNetwork(network);
 					}
 
 					if (y < (rows - 1) * lengthCentimeters) {
-						edge().from(wIn).to(sOut).build();
+						Edge.build(wIn, sOut).accessController(trafficLight.getController(1)).speedLimit(10)
+								.addToNetwork(network);
 					}
 
 					if (y > 0) {
-						edge().from(wIn).to(nOut).build();
+						Edge.build(wIn, nOut).accessController(trafficLight.getController(1)).speedLimit(10)
+								.addToNetwork(network);
 					}
 				}
 
 				if (x < (columns - 1) * lengthCentimeters) {
 					if (y < (rows - 1) * lengthCentimeters) {
-						edge().from(eIn).to(sOut).build();
+						Edge.build(eIn, sOut).accessController(trafficLight.getController(1)).speedLimit(10)
+								.addToNetwork(network);
 					}
 
 					if (y > 0) {
-						edge().from(eIn).to(nOut).build();
+						Edge.build(eIn, nOut).accessController(trafficLight.getController(1)).speedLimit(10)
+								.addToNetwork(network);
 					}
 
 					if (x > 0) {
-						edge().from(eIn).to(wOut).build();
+						Edge.build(eIn, wOut).accessController(trafficLight.getController(1)).addToNetwork(network);
 					}
 				}
 
 				if (y < (rows - 1) * lengthCentimeters) {
 					if (x < (columns - 1) * lengthCentimeters) {
-						edge().from(sIn).to(eOut).build();
+						Edge.build(sIn, eOut).accessController(trafficLight.getController(0)).speedLimit(10)
+								.addToNetwork(network);
 					}
 
 					if (y > 0) {
-						edge().from(sIn).to(nOut).build();
+						Edge.build(sIn, nOut).accessController(trafficLight.getController(0)).addToNetwork(network);
 					}
 
 					if (x > 0) {
-						edge().from(sIn).to(wOut).build();
+						Edge.build(sIn, wOut).accessController(trafficLight.getController(0)).speedLimit(10)
+								.addToNetwork(network);
 					}
 				}
 
@@ -133,6 +131,10 @@ public class RoadNetworkBuilder extends GraphBuilder<Point, Edge, RoadNetwork> {
 		}
 
 		return this;
+	}
+
+	public RoadNetwork build() {
+		return network;
 	}
 
 }

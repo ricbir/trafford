@@ -42,7 +42,7 @@ public class RoadNetworkTest {
 		network.addEdge(source, target, edge);
 
 		when(agent.getEdgePosition()).thenReturn(new EdgePosition(edge, Math.sqrt(2)));
-		when(edge.getLength()).thenReturn(source.distance(target) / 100.);
+		when(edge.getLength()).thenReturn(source.distance(target));
 
 		assertEquals(new Point(100, 100), network.getCoordinates(agent));
 	}

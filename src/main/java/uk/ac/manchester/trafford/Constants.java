@@ -9,7 +9,7 @@ public class Constants {
 	/** Agent acceleration in m/s^2 */
 	public static final double AGENT_ACCELERATION = 4;
 	/** Agent deceleration in m/s^2 */
-	public static final double AGENT_DECELERATION = 5;
+	public static final double AGENT_DECELERATION = 2;
 	/** One second, in nanoseconds */
 	public static final int NANOSECONDS_PER_SECOND = 1_000_000_000;
 
@@ -23,6 +23,6 @@ public class Constants {
 
 	public static final double LANE_WIDTH = 3;
 
-	public static final double RENDER_SCALING_FACTOR = 0.1;
+	public static final double RENDER_SCALING_FACTOR = 0.02;
 
 }

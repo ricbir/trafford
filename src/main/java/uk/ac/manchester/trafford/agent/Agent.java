@@ -17,6 +17,7 @@ import uk.ac.manchester.trafford.exceptions.PathNotFoundException;
 import uk.ac.manchester.trafford.network.Point;
 import uk.ac.manchester.trafford.network.RoadNetwork;
 import uk.ac.manchester.trafford.network.edge.Edge;
+import uk.ac.manchester.trafford.network.edge.EdgeAccessController;
 import uk.ac.manchester.trafford.network.edge.EdgePosition;
 
 public class Agent {
@@ -134,11 +135,9 @@ public class Agent {
 			return;
 		}
 
-		if (distanceOnCurrentEdge > currentEdge.getLength()) {
+		if (nextEdge != null && distanceOnCurrentEdge > currentEdge.getLength()) {
 			distanceOnCurrentEdge -= currentEdge.getLength();
-			if (nextEdge != null) {
-				setLeader(nextEdge.getLastAgent());
-			}
+			setLeader(nextEdge.getLastAgent());
 			changeEdge();
 		}
 	}
@@ -146,7 +145,7 @@ public class Agent {
 	private void updateSpeed() {
 		speed += calculateSpeedDelta();
 		// Avoid "bounce back" effect
-		if (speed < 0) {
+		if (speed < 0.005) {
 			speed = 0;
 		}
 	}
@@ -180,17 +179,45 @@ public class Agent {
 	 * @return The speed delta.
 	 */
 	private double calculateSpeedDelta() {
-		double freeRoadTerm = 1 - Math.pow(speed / maxSpeed, 4);
-		double interactionTerm = 0;
+		double targetSpeed = maxSpeed < currentEdge.getSpeedLimit() ? maxSpeed : currentEdge.getSpeedLimit();
+		double freeRoadTerm = Math.pow(speed / targetSpeed, 4);
+		double leaderInteractionTerm = 0;
+		double nextEdgeInteractionTerm = 0;
 		if (leader != null) {
-			double distance = getDistance(leader);
-			if (distance < speed * 5 || distance < Constants.MINIMUM_SPACING * 5) {
-				interactionTerm = Math.pow((Constants.MINIMUM_SPACING + speed * Constants.DESIRED_TIME_HEADWAY
-						+ (speed * (speed - leader.speed)) / (2 * Math.sqrt(maxAcceleration * breakingDeceleration)))
-						/ distance, 2);
+			double distanceToLeader = getDistance(leader);
+			if (distanceToLeader < speed * 5 || distanceToLeader < Constants.MINIMUM_SPACING * 5) {
+				leaderInteractionTerm = Math.pow(
+						(Constants.MINIMUM_SPACING + speed * Constants.DESIRED_TIME_HEADWAY
+								+ (speed * (speed - leader.speed))
+										/ (2 * Math.sqrt(maxAcceleration * breakingDeceleration)))
+								/ distanceToLeader,
+						2);
 			}
 		}
-		return maxAcceleration * (freeRoadTerm - interactionTerm) / Constants.UPDATES_PER_SECOND;
+		if (nextEdge != null) {
+			double distanceToNextEdge = currentEdge.getLength() - distanceOnCurrentEdge;
+
+			if (nextEdge.getAccessState() != EdgeAccessController.State.GREEN && distanceToNextEdge < 50) {
+				if (nextEdge.getAccessState() == EdgeAccessController.State.RED
+						|| distanceToNextEdge > speed * 3 - 30) {
+					nextEdgeInteractionTerm = Math
+							.pow((0.1 + (speed * speed) / (2 * Math.sqrt(maxAcceleration * breakingDeceleration)))
+									/ distanceToNextEdge, 2);
+				}
+			} else {
+				if (speed > nextEdge.getSpeedLimit() && distanceToNextEdge < 50) {
+					nextEdgeInteractionTerm = Math.pow(((speed * (speed - nextEdge.getSpeedLimit()))
+							/ (2 * Math.sqrt(maxAcceleration * breakingDeceleration))) / distanceToNextEdge, 2);
+				}
+			}
+		}
+
+		if (leaderInteractionTerm > nextEdgeInteractionTerm) {
+			return maxAcceleration * (1 - freeRoadTerm - leaderInteractionTerm) / Constants.UPDATES_PER_SECOND;
+		} else {
+			return maxAcceleration * (1 - freeRoadTerm - nextEdgeInteractionTerm) / Constants.UPDATES_PER_SECOND;
+		}
+
 	}
 
 	protected double getDistance(Agent a) {
@@ -268,6 +295,10 @@ public class Agent {
 
 	public EdgePosition getEdgePosition() {
 		return new EdgePosition(currentEdge, distanceOnCurrentEdge);
+	}
+
+	public double getSpeed() {
+		return speed;
 	}
 
 	@Override

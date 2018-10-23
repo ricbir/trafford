@@ -1,7 +1,5 @@
 package uk.ac.manchester.trafford;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.logging.Logger;
 
 import uk.ac.manchester.trafford.agent.Agent;
@@ -42,8 +40,6 @@ public class SimulationController {
 
 	private Renderer renderer;
 	private RoadNetwork network;
-
-	private Set<Agent> agentAddSet = new HashSet<>();
 
 	SimulationController(Renderer renderer, RoadNetwork network) {
 		this.renderer = renderer;
@@ -129,12 +125,6 @@ public class SimulationController {
 	}
 
 	private void updateModel() {
-		if (!agentAddSet.isEmpty()) {
-			synchronized (agentAddSet) {
-				network.addAgents(agentAddSet);
-				agentAddSet.clear();
-			}
-		}
 		network.update();
 	}
 
@@ -147,13 +137,8 @@ public class SimulationController {
 	 * @param maxSpeed
 	 */
 	public void addAgent(EdgePosition source, EdgePosition target, double maxSpeed) {
-		if (source.equals(target)) {
-			return;
-		}
 		try {
-			synchronized (agentAddSet) {
-				agentAddSet.add(new Agent(network, source, target, maxSpeed));
-			}
+			network.addAgent(new Agent(network, source, target, maxSpeed));
 		} catch (PathNotFoundException | NodeNotFoundException e) {
 			throw new IllegalArgumentException(e);
 		}

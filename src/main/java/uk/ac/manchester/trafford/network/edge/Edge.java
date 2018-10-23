@@ -8,6 +8,8 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 
 import uk.ac.manchester.trafford.agent.Agent;
 import uk.ac.manchester.trafford.exceptions.AgentNotOnEdgeException;
+import uk.ac.manchester.trafford.network.Point;
+import uk.ac.manchester.trafford.network.edge.EdgeAccessController.State;
 
 @SuppressWarnings("serial")
 public class Edge extends DefaultWeightedEdge {
@@ -16,12 +18,21 @@ public class Edge extends DefaultWeightedEdge {
 	private static final Logger LOGGER = Logger.getLogger(Edge.class.getName());
 
 	private final double length;
-	private double speedLimit = 200;
-
 	private LinkedList<Agent> agents = new LinkedList<>();
+
+	protected double speedLimit;
+	protected EdgeAccessController accessController;
+
+	public static EdgeBuilder build(Point from, Point to) {
+		return new EdgeBuilder(from, to);
+	}
 
 	Edge(double length) {
 		this.length = length;
+	}
+
+	public State getAccessState() {
+		return accessController.getState();
 	}
 
 	/**
@@ -93,24 +104,12 @@ public class Edge extends DefaultWeightedEdge {
 		return speedLimit;
 	}
 
-	protected void setSpeedLimit(double speedLimit) {
-		this.speedLimit = speedLimit;
-	}
-
 	public Agent getLastAgent() {
 		return agents.peekLast();
 	}
 
-	public void checkListIntegrity() {
-		Agent lastAgent = null;
-		for (Agent agent : agents) {
-			if (lastAgent != null && lastAgent.getLeader() != agent) {
-				LOGGER.warning("Agent " + agent + " should be leader of agent " + lastAgent + ", but agent "
-						+ lastAgent.getLeader() + " was.");
-				System.out.println("Agent " + agent + " should be leader of agent " + lastAgent + ", but agent "
-						+ lastAgent.getLeader() + " was.");
-			}
-		}
+	public double getCongestion() {
+		return agents.size() / length;
 	}
 
 	@Override

@@ -9,6 +9,7 @@ import org.jgrapht.alg.interfaces.ShortestPathAlgorithm;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 
+import uk.ac.manchester.trafford.Model;
 import uk.ac.manchester.trafford.agent.Agent;
 import uk.ac.manchester.trafford.exceptions.AlreadyAtDestinationException;
 import uk.ac.manchester.trafford.exceptions.NodeNotFoundException;
@@ -23,6 +24,10 @@ public class RoadNetwork extends DefaultDirectedWeightedGraph<Point, Edge> {
 
 	private Set<Agent> agents = new HashSet<>();
 	private Set<Agent> agentRemoveSet = new HashSet<>();
+	private Set<Agent> agentAddSet = new HashSet<>();
+	double averageCongestion = 0;
+
+	private Set<Model> subscribers = new HashSet<>();
 
 	/**
 	 * Create a road network of given type and based on a graph.
@@ -35,8 +40,20 @@ public class RoadNetwork extends DefaultDirectedWeightedGraph<Point, Edge> {
 		}
 	}
 
-	public synchronized void addAgents(Set<Agent> newAgents) {
-		agents.addAll(newAgents);
+	public void addAgent(Agent agent) {
+		agentAddSet.add(agent);
+	}
+
+	public void subscribe(Model subscriber) {
+		synchronized (subscribers) {
+			subscribers.add(subscriber);
+		}
+	}
+
+	public void unsubscribe(Model subscriber) {
+		synchronized (subscribers) {
+			subscribers.remove(subscriber);
+		}
 	}
 
 	/**
@@ -50,6 +67,8 @@ public class RoadNetwork extends DefaultDirectedWeightedGraph<Point, Edge> {
 	}
 
 	public synchronized void update() {
+		agents.addAll(agentAddSet);
+		agentAddSet.clear();
 		for (Agent agent : agents) {
 			try {
 				agent.move();
@@ -57,14 +76,26 @@ public class RoadNetwork extends DefaultDirectedWeightedGraph<Point, Edge> {
 				agentRemoveSet.add(agent);
 			} catch (PathNotFoundException e) {
 				e.printStackTrace();
+				agentRemoveSet.add(agent);
 			} catch (NodeNotFoundException e) {
 				e.printStackTrace();
+				agentRemoveSet.add(agent);
 			}
 		}
 		agents.removeAll(agentRemoveSet);
 		agentRemoveSet.clear();
+		averageCongestion = 0;
+		double totalLength = 0;
 		for (Edge edge : edgeSet()) {
-			edge.checkListIntegrity();
+			averageCongestion += edge.getCongestion() * edge.getLength();
+			totalLength += edge.getLength();
+		}
+		averageCongestion /= totalLength;
+
+		synchronized (subscribers) {
+			for (Model subscriber : subscribers) {
+				subscriber.update();
+			}
 		}
 	}
 
@@ -90,5 +121,9 @@ public class RoadNetwork extends DefaultDirectedWeightedGraph<Point, Edge> {
 		} catch (IllegalArgumentException e) {
 			throw new NodeNotFoundException(e);
 		}
+	}
+
+	public double getAverageCongestion() {
+		return averageCongestion;
 	}
 }

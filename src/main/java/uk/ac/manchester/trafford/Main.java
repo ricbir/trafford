@@ -14,7 +14,7 @@ public class Main {
 
 	private static final Logger LOGGER = Logger.getLogger(Main.class.getPackage().getName());
 
-	private static RoadNetwork network = RoadNetworkBuilder.RoadNetwork().grid(6, 6, 20, 50).build();
+	private static RoadNetwork network = RoadNetworkBuilder.RoadNetwork().grid(6, 6, 100, 50).build();
 
 	public static void main(String[] args) throws InterruptedException, PathNotFoundException, NodeNotFoundException {
 		LOGGER.setLevel(Level.ALL);

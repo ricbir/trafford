@@ -1,5 +1,7 @@
 package uk.ac.manchester.trafford.network;
 
+import uk.ac.manchester.trafford.util.Convert;
+
 public class Point {
 
 	private final int x;
@@ -52,7 +54,14 @@ public class Point {
 		return "(" + x + ", " + y + ")";
 	}
 
+	/**
+	 * Return the distance between this point and the target, in meters.
+	 * 
+	 * @param target
+	 * @return The distance in meters.
+	 */
 	public double distance(Point target) {
-		return Math.sqrt((x - target.x) * (x - target.x) + (y - target.y) * (y - target.y));
+		return Convert
+				.centimetersToMeters(Math.sqrt((x - target.x) * (x - target.x) + (y - target.y) * (y - target.y)));
 	}
 }

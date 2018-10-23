@@ -2,6 +2,7 @@ package uk.ac.manchester.trafford.agent;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.Mockito.never;
@@ -26,6 +27,7 @@ import uk.ac.manchester.trafford.Constants;
 import uk.ac.manchester.trafford.network.Point;
 import uk.ac.manchester.trafford.network.RoadNetwork;
 import uk.ac.manchester.trafford.network.edge.Edge;
+import uk.ac.manchester.trafford.network.edge.EdgeAccessController;
 import uk.ac.manchester.trafford.network.edge.EdgePosition;
 
 public class AgentTest {
@@ -62,6 +64,8 @@ public class AgentTest {
 
 		for (Edge edge : edges) {
 			when(edge.getLength()).thenReturn(100.);
+			when(edge.getSpeedLimit()).thenReturn(200.);
+			when(edge.getAccessState()).thenReturn(EdgeAccessController.State.GREEN);
 			when(edge.join(any(Agent.class), anyDouble())).thenReturn(true);
 		}
 
@@ -137,8 +141,6 @@ public class AgentTest {
 
 	@Test
 	public void testMoveNotFollowing() throws Exception {
-		agent = new Agent(network, start, destination, AGENT_SPEED);
-		agent.move();
 		agent.move();
 		assertEquals(new EdgePosition(edge1, 0), agent.getEdgePosition());
 
@@ -154,8 +156,12 @@ public class AgentTest {
 		leader.move();
 		agent.move();
 
+		int timeout = 3000;
 		while (leader.getEdgePosition().getEdge() == edge1) {
 			leader.move();
+			if (timeout-- == 0) {
+				fail("Operation timed out");
+			}
 		}
 
 		verify(edge1).exit(leader);
@@ -171,7 +177,10 @@ public class AgentTest {
 		for (int i = 0; i < 100; i++) {
 			leader.move();
 			agent.move();
-			assert (agent.getEdgePosition().getDistance() <= leader.getEdgePosition().getDistance());
+			assertTrue(
+					"follower position: " + agent.getEdgePosition().getDistance() + ", leader position: "
+							+ leader.getEdgePosition().getDistance(),
+					agent.getEdgePosition().getDistance() <= leader.getEdgePosition().getDistance());
 		}
 	}
 
@@ -190,5 +199,46 @@ public class AgentTest {
 							+ distanceBetweenAgents + " > " + Constants.MINIMUM_SPACING,
 					distanceBetweenAgents > Constants.MINIMUM_SPACING);
 		}
+	}
+
+	@Test
+	public void testSlowDownForSpeedLimit() throws Exception {
+		when(edge2.getSpeedLimit()).thenReturn(AGENT_SPEED - 2);
+		while (agent.getEdgePosition().getDistance() < edge1.getLength() - 0.1) {
+			agent.move();
+		}
+		assertEquals(edge1, agent.getEdgePosition().getEdge());
+		assertEquals(AGENT_SPEED - 2, agent.getSpeed(), 0.1);
+	}
+
+	@Test
+	public void testStopAtRedLight() throws Exception {
+		when(edge2.getAccessState()).thenReturn(EdgeAccessController.State.RED);
+		for (int i = 0; i < 500; i++) {
+			agent.move();
+		}
+		assertEquals(edge1, agent.getEdgePosition().getEdge());
+		assertEquals(edge1.getLength(), agent.getEdgePosition().getDistance(), 0.1);
+	}
+
+	@Test
+	public void testStopAtYellowLight() throws Exception {
+		when(edge2.getAccessState()).thenReturn(EdgeAccessController.State.YELLOW);
+		for (int i = 0; i < 500; i++) {
+			agent.move();
+		}
+		assertEquals(edge1, agent.getEdgePosition().getEdge());
+		assertEquals(edge1.getLength(), agent.getEdgePosition().getDistance(), 0.1);
+	}
+
+	@Test
+	public void testRunYellowLight() throws Exception {
+		when(edge2.getAccessState()).thenReturn(EdgeAccessController.State.GREEN);
+		for (int i = 0; i < 500; i++) {
+			agent.move();
+			if (i == 400)
+				when(edge2.getAccessState()).thenReturn(EdgeAccessController.State.YELLOW);
+		}
+		assertEquals(edge2, agent.getEdgePosition().getEdge());
 	}
 }

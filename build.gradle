@@ -24,6 +24,8 @@ dependencies {
 
 	// JGraphT
     implementation 'org.jgrapht:jgrapht-core:1.2.0'
+    // Google Java libraries
+    implementation 'com.google.guava:guava:27.0-jre'
 
     // Use JUnit test framework
     testImplementation 'junit:junit:4.12'

@@ -75,13 +75,28 @@ public class SwingRenderer extends JFrame implements Renderer {
 			for (Edge edge : network.edgeSet()) {
 				Point source = network.getEdgeSource(edge);
 				Point target = network.getEdgeTarget(edge);
-				g.setColor(Color.BLACK);
+
+				g.setColor(Color.GRAY);
 				g.drawLine(scale(source.getX()), scale(source.getY()), scale(target.getX()), scale(target.getY()));
+
+				switch (edge.getAccessState()) {
+				case RED:
+					g.setColor(Color.RED);
+					break;
+				case YELLOW:
+					g.setColor(Color.YELLOW);
+					break;
+				case GREEN:
+					g.setColor(Color.GREEN);
+					break;
+				}
+				g.drawOval(scale(source.getX()) - 2, scale(source.getY()) - 2, 4, 4);
+				g.fillOval(scale(source.getX()) - 2, scale(source.getY()) - 2, 4, 4);
 			}
 
 			Agent[] agentSetSnapshot = network.agentSetSnapshot();
 
-			g.setColor(Color.RED);
+			g.setColor(Color.BLACK);
 			for (Agent agent : agentSetSnapshot) {
 				Point point = network.getCoordinates(agent);
 				if (point != null) {
@@ -89,6 +104,9 @@ public class SwingRenderer extends JFrame implements Renderer {
 					g.fillRect(scale(point.getX()) - 1, scale(point.getY()) - 1, 2, 2);
 				}
 			}
+
+			g.setColor(Color.BLACK);
+			g.drawString("" + network.getAverageCongestion(), 20, 800);
 		}
 
 		private int scale(int position) {
