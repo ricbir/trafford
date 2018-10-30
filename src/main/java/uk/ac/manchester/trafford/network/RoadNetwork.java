@@ -84,13 +84,6 @@ public class RoadNetwork extends DefaultDirectedWeightedGraph<Point, Edge> {
 		}
 		agents.removeAll(agentRemoveSet);
 		agentRemoveSet.clear();
-		averageCongestion = 0;
-		double totalLength = 0;
-		for (Edge edge : edgeSet()) {
-			averageCongestion += edge.getCongestion() * edge.getLength();
-			totalLength += edge.getLength();
-		}
-		averageCongestion /= totalLength;
 
 		synchronized (subscribers) {
 			for (Model subscriber : subscribers) {

@@ -1,16 +1,13 @@
 package uk.ac.manchester.trafford.agent;
 
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Logger;
 
 import org.jgrapht.GraphPath;
 
 import uk.ac.manchester.trafford.Constants;
-import uk.ac.manchester.trafford.exceptions.AgentNotOnEdgeException;
 import uk.ac.manchester.trafford.exceptions.AlreadyAtDestinationException;
 import uk.ac.manchester.trafford.exceptions.NodeNotFoundException;
 import uk.ac.manchester.trafford.exceptions.PathNotFoundException;
@@ -33,9 +30,7 @@ public class Agent {
 
 	// private List<Agent> watchlist = new ArrayList<>(5);
 	private Agent leader = null;
-	private Set<Agent> subscribers = new HashSet<>();
-	private Set<Agent> subscribersRemoveSet = new HashSet<>();
-	private Set<Agent> subscribersAddSet = new HashSet<>();
+	private Agent follower = null;
 
 	/** Current speed in m/s */
 	private double speed;
@@ -73,8 +68,8 @@ public class Agent {
 		this.target = target;
 		this.shouldUpdatePath = true;
 		this.state = State.AT_SOURCE;
-		this.currentEdge = source.getEdge();
-		this.distanceOnCurrentEdge = source.getDistance();
+		this.currentEdge = null;
+		this.distanceOnCurrentEdge = 0;
 		executeUpdatePath();
 	}
 
@@ -91,23 +86,18 @@ public class Agent {
 	 * @throws PathNotFoundException
 	 */
 	public void move() throws AlreadyAtDestinationException, PathNotFoundException, NodeNotFoundException {
-		updateSubscribers();
-
 		if (state == State.AT_DESTINATION) {
 			throw new AlreadyAtDestinationException(this);
 		}
 
-		if (state == State.AT_SOURCE) {
-			if (currentEdge.join(this, distanceOnCurrentEdge)) {
-				state = State.TRAVELLING;
-				LOGGER.fine(
-						"Agent " + this + " has joined edge " + currentEdge + " at position " + distanceOnCurrentEdge);
-			}
+		if (currentEdge == target.getEdge() && distanceOnCurrentEdge >= target.getDistance()) {
+			leaveFlow();
 			return;
 		}
 
-		if (nextEdge != null && (leader == null || leader.currentEdge != currentEdge)) {
-			setLeader(nextEdge.getLastAgent());
+		if (state == State.AT_SOURCE) {
+			joinFlow(source.getEdge(), source.getDistance());
+			return;
 		}
 
 		if (shouldUpdatePath) {
@@ -121,23 +111,8 @@ public class Agent {
 	private void updatePosition() {
 		distanceOnCurrentEdge += speed / Constants.UPDATES_PER_SECOND;
 
-		if (currentEdge == target.getEdge() && distanceOnCurrentEdge >= target.getDistance()) {
-			state = State.AT_DESTINATION;
-			try {
-				currentEdge.exit(this);
-			} catch (AgentNotOnEdgeException e) {
-				LOGGER.warning(e.getMessage());
-			}
-			for (Agent subscriber : subscribers) {
-				subscriber.leaderLeavingEdge(this);
-			}
-			LOGGER.fine("Agent " + this + " has reached its destination");
-			return;
-		}
-
 		if (nextEdge != null && distanceOnCurrentEdge > currentEdge.getLength()) {
 			distanceOnCurrentEdge -= currentEdge.getLength();
-			setLeader(nextEdge.getLastAgent());
 			changeEdge();
 		}
 	}
@@ -150,31 +125,74 @@ public class Agent {
 		}
 	}
 
+	private void joinFlow(Edge edge, double distance) {
+		Agent newLeader = edge.getLastAgent();
+		Agent newFollower = null;
+		while (newLeader != null && newLeader.distanceOnCurrentEdge < distance) {
+			newFollower = newLeader;
+			newLeader = newLeader.leader;
+		}
+		if (newFollower == null) {
+			edge.setLastAgent(this);
+		}
+		addToLeaderChain(newFollower, newLeader);
+
+		currentEdge = edge;
+		distanceOnCurrentEdge = distance;
+		state = State.TRAVELLING;
+		LOGGER.fine("Agent " + this + " has joined edge " + currentEdge + " at position " + distanceOnCurrentEdge);
+	}
+
+	private void leaveFlow() {
+		if (follower == null) {
+			currentEdge.setLastAgent(leader);
+		}
+		removeFromLeaderChain();
+		currentEdge = null;
+		state = State.AT_DESTINATION;
+		LOGGER.fine("Agent " + this + " has reached its destination");
+	}
+
+	private void removeFromLeaderChain() {
+		if (leader != null) {
+			leader.follower = follower;
+		}
+		if (follower != null) {
+			follower.leader = leader;
+		}
+		leader = null;
+		follower = null;
+	}
+
+	private void addToLeaderChain(Agent newFollower, Agent newLeader) {
+		if (newFollower != null) {
+			newFollower.leader = this;
+		}
+		if (newLeader != null) {
+			newLeader.follower = this;
+		}
+		follower = newFollower;
+		leader = newLeader;
+	}
+
 	private void changeEdge() {
-		LOGGER.fine(String.format("Agent %s moving to next edge", this));
+		LOGGER.finer(String.format("Agent %s moving to next edge", this));
 
-		try {
-			currentEdge.exit(this);
-		} catch (AgentNotOnEdgeException e) {
-			LOGGER.warning(e.getMessage());
+		if (currentEdge.getLastAgent() == this) {
+			currentEdge.setLastAgent(null);
 		}
+
+		removeFromLeaderChain();
+		addToLeaderChain(null, nextEdge.getLastAgent());
+		nextEdge.setLastAgent(this);
+
 		currentEdge = nextEdge;
-		try {
-			currentEdge.enter(this);
-		} catch (NullPointerException e) {
-			LOGGER.severe(debugString());
-		}
-
 		nextEdge = edgeIterator.hasNext() ? edgeIterator.next() : null;
-
-		for (Agent subscriber : subscribers) {
-			subscriber.leaderLeavingEdge(this);
-		}
 	}
 
 	/**
 	 * Calculate the necessary speed adjustment. Based on the Intelligent Driver
-	 * Model (https://en.wikipedia.org/wiki/Intelligent_driver_model)
+	 * Model.
 	 * 
 	 * @return The speed delta.
 	 */
@@ -183,31 +201,27 @@ public class Agent {
 		double freeRoadTerm = Math.pow(speed / targetSpeed, 4);
 		double leaderInteractionTerm = 0;
 		double nextEdgeInteractionTerm = 0;
+
+		Agent closestLeader = null;
 		if (leader != null) {
-			double distanceToLeader = getDistance(leader);
-			if (distanceToLeader < speed * 5 || distanceToLeader < Constants.MINIMUM_SPACING * 5) {
-				leaderInteractionTerm = Math.pow(
-						(Constants.MINIMUM_SPACING + speed * Constants.DESIRED_TIME_HEADWAY
-								+ (speed * (speed - leader.speed))
-										/ (2 * Math.sqrt(maxAcceleration * breakingDeceleration)))
-								/ distanceToLeader,
-						2);
-			}
+			closestLeader = leader;
+		} else if (nextEdge != null) {
+			closestLeader = nextEdge.getLastAgent();
 		}
+		if (closestLeader != null) {
+			leaderInteractionTerm = getIDMInteractionTerm(closestLeader.speed, getDistance(closestLeader));
+		}
+
 		if (nextEdge != null) {
 			double distanceToNextEdge = currentEdge.getLength() - distanceOnCurrentEdge;
-
-			if (nextEdge.getAccessState() != EdgeAccessController.State.GREEN && distanceToNextEdge < 50) {
+			if (nextEdge.getAccessState() != EdgeAccessController.State.GREEN) {
 				if (nextEdge.getAccessState() == EdgeAccessController.State.RED
 						|| distanceToNextEdge > speed * 3 - 30) {
-					nextEdgeInteractionTerm = Math
-							.pow((0.1 + (speed * speed) / (2 * Math.sqrt(maxAcceleration * breakingDeceleration)))
-									/ distanceToNextEdge, 2);
+					nextEdgeInteractionTerm = getIDMInteractionTerm(0, distanceToNextEdge);
 				}
 			} else {
-				if (speed > nextEdge.getSpeedLimit() && distanceToNextEdge < 50) {
-					nextEdgeInteractionTerm = Math.pow(((speed * (speed - nextEdge.getSpeedLimit()))
-							/ (2 * Math.sqrt(maxAcceleration * breakingDeceleration))) / distanceToNextEdge, 2);
+				if (speed > nextEdge.getSpeedLimit()) {
+					nextEdgeInteractionTerm = getIDMInteractionTerm(nextEdge.getSpeedLimit(), distanceToNextEdge);
 				}
 			}
 		}
@@ -218,6 +232,20 @@ public class Agent {
 			return maxAcceleration * (1 - freeRoadTerm - nextEdgeInteractionTerm) / Constants.UPDATES_PER_SECOND;
 		}
 
+	}
+
+	/**
+	 * Calculates the interaction term for the Intelligent Driver Model
+	 * (https://en.wikipedia.org/wiki/Intelligent_driver_model).
+	 * 
+	 * @param leaderSpeed
+	 * @param distanceToLeader
+	 * @return
+	 */
+	private double getIDMInteractionTerm(double leaderSpeed, double distanceToLeader) {
+		return Math.pow((Constants.MINIMUM_SPACING + speed * Constants.DESIRED_TIME_HEADWAY
+				+ (speed * (speed - leaderSpeed)) / (2 * Math.sqrt(maxAcceleration * breakingDeceleration)))
+				/ distanceToLeader, 2);// TODO extract sqrt as constant for efficiency
 	}
 
 	protected double getDistance(Agent a) {
@@ -231,46 +259,9 @@ public class Agent {
 		return Integer.MAX_VALUE;
 	}
 
-	protected void leaderLeavingEdge(Agent agent) {
-		if (leader == agent) {
-			if (nextEdge != null) {
-				setLeader(nextEdge.getLastAgent());
-			} else {
-				setLeader(null);
-			}
-		}
-	}
-
-	public void setLeader(Agent agent) {
-		if (leader != agent) {
-			if (leader != null) {
-				leader.unsubscribe(this);
-			}
-			leader = agent;
-			if (leader != null) {
-				leader.subscribe(this);
-			}
-		}
-	}
-
-	protected void subscribe(Agent agent) {
-		subscribersAddSet.add(agent);
-	}
-
-	protected void unsubscribe(Agent agent) {
-		subscribersRemoveSet.add(agent);
-	}
-
-	private void updateSubscribers() {
-		subscribers.removeAll(subscribersRemoveSet);
-		subscribersRemoveSet.clear();
-
-		subscribers.addAll(subscribersAddSet);
-		subscribersAddSet.clear();
-	}
-
 	private void executeUpdatePath() throws PathNotFoundException, NodeNotFoundException {
-		path = network.getShortestPath(network.getEdgeTarget(currentEdge), network.getEdgeSource(target.getEdge()));
+		path = network.getShortestPath(network.getEdgeTarget(source.getEdge()),
+				network.getEdgeSource(target.getEdge()));
 
 		if (path == null) {
 			throw new PathNotFoundException(source, target);
@@ -289,8 +280,12 @@ public class Agent {
 		shouldUpdatePath = false;
 	}
 
-	public Agent getLeader() {
+	Agent getLeader() {
 		return leader;
+	}
+
+	Agent getFollower() {
+		return follower;
 	}
 
 	public EdgePosition getEdgePosition() {

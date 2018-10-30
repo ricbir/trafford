@@ -1,13 +1,10 @@
 package uk.ac.manchester.trafford.network.edge;
 
-import java.util.LinkedList;
-import java.util.ListIterator;
 import java.util.logging.Logger;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import uk.ac.manchester.trafford.agent.Agent;
-import uk.ac.manchester.trafford.exceptions.AgentNotOnEdgeException;
 import uk.ac.manchester.trafford.network.Point;
 import uk.ac.manchester.trafford.network.edge.EdgeAccessController.State;
 
@@ -18,10 +15,11 @@ public class Edge extends DefaultWeightedEdge {
 	private static final Logger LOGGER = Logger.getLogger(Edge.class.getName());
 
 	private final double length;
-	private LinkedList<Agent> agents = new LinkedList<>();
 
 	protected double speedLimit;
 	protected EdgeAccessController accessController;
+
+	private Agent lastAgent = null;
 
 	public static EdgeBuilder build(Point from, Point to) {
 		return new EdgeBuilder(from, to);
@@ -33,57 +31,6 @@ public class Edge extends DefaultWeightedEdge {
 
 	public State getAccessState() {
 		return accessController.getState();
-	}
-
-	/**
-	 * Have an agent enter this edge.
-	 * 
-	 * @param agent The agent.
-	 */
-	public void enter(Agent agent) {
-		LOGGER.fine("Agent " + agent + " entering edge " + this);
-		agents.add(agent);
-	}
-
-	/**
-	 * Have an agent exit this edge.
-	 * 
-	 * @param agent The agent.
-	 */
-	public void exit(Agent agent) throws AgentNotOnEdgeException {
-		LOGGER.fine("Agent " + agent + " leaving edge " + this);
-		if (!agents.remove(agent)) {
-			throw new AgentNotOnEdgeException(agent, this);
-		}
-	}
-
-	/**
-	 * Try to join this edge at a certain distance.
-	 * 
-	 * @param agent
-	 * @param distanceFromEdgeStart
-	 * @return Whether or not the operation was successful.
-	 */
-	public boolean join(Agent agent, double distanceFromEdgeStart) {
-		ListIterator<Agent> listIterator = agents.listIterator();
-		while (listIterator.hasNext()) {
-			Agent follower = null;
-			if ((follower = listIterator.next()).getEdgePosition().getDistance() < distanceFromEdgeStart) {
-				follower.setLeader(agent);
-				listIterator.previous();
-				listIterator.add(agent);
-				listIterator.previous();
-				if (listIterator.hasPrevious()) {
-					agent.setLeader(listIterator.previous());
-				}
-				return true;
-			}
-		}
-		if (listIterator.hasPrevious()) {
-			agent.setLeader(listIterator.previous());
-		}
-		enter(agent);
-		return true;
 	}
 
 	/**
@@ -105,16 +52,16 @@ public class Edge extends DefaultWeightedEdge {
 	}
 
 	public Agent getLastAgent() {
-		return agents.peekLast();
-	}
-
-	public double getCongestion() {
-		return agents.size() / length;
+		return lastAgent;
 	}
 
 	@Override
 	public String toString() {
 		return "{ source: " + getSource() + ", target: " + getTarget() + ", length: " + length + ", s/l: " + speedLimit
 				+ " }";
+	}
+
+	public void setLastAgent(Agent agent) {
+		this.lastAgent = agent;
 	}
 }
