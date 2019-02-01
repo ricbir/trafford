@@ -56,6 +56,8 @@ public class Agent {
 	private GraphPath<Point, Edge> path;
 	private Iterator<Edge> edgeIterator;
 
+	private int journeyTimeCounter;
+
 	public Agent(String name, RoadNetwork network, EdgePosition source, EdgePosition target, double maxSpeed)
 			throws PathNotFoundException, NodeNotFoundException {
 		this.name = name;
@@ -70,6 +72,8 @@ public class Agent {
 		this.state = State.AT_SOURCE;
 		this.currentEdge = null;
 		this.distanceOnCurrentEdge = 0;
+		this.journeyTimeCounter = (int) Math
+				.round(source.getDistance() / source.getEdge().getSpeedLimit() * Constants.UPDATES_PER_SECOND);
 		executeUpdatePath();
 	}
 
@@ -110,10 +114,13 @@ public class Agent {
 
 	private void updatePosition() {
 		distanceOnCurrentEdge += speed / Constants.UPDATES_PER_SECOND;
+		journeyTimeCounter++;
 
 		if (nextEdge != null && distanceOnCurrentEdge > currentEdge.getLength()) {
 			distanceOnCurrentEdge -= currentEdge.getLength();
+			currentEdge.setLastJourneyTime(journeyTimeCounter / (double) Constants.UPDATES_PER_SECOND);
 			changeEdge();
+			journeyTimeCounter = 0;
 		}
 	}
 
@@ -248,6 +255,13 @@ public class Agent {
 				/ distanceToLeader, 2);// TODO extract sqrt as constant for efficiency
 	}
 
+	/**
+	 * Get the agent's distance from the specified agent
+	 * 
+	 * @param a The other agent
+	 * @return Distance from the other agent. If the agent is not on current or next
+	 *         edge, distance is Double.MAX_VALUE
+	 */
 	protected double getDistance(Agent a) {
 		if (currentEdge == a.currentEdge) {
 			return a.distanceOnCurrentEdge - distanceOnCurrentEdge;
@@ -256,7 +270,7 @@ public class Agent {
 		if (nextEdge == a.currentEdge) {
 			return currentEdge.getLength() + a.distanceOnCurrentEdge - distanceOnCurrentEdge;
 		}
-		return Integer.MAX_VALUE;
+		return Double.MAX_VALUE;
 	}
 
 	private void executeUpdatePath() throws PathNotFoundException, NodeNotFoundException {

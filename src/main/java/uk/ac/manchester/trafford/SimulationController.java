@@ -20,7 +20,7 @@ public class SimulationController {
 	@SuppressWarnings("unused")
 	private static Logger LOGGER = Logger.getLogger(SimulationController.class.getName());
 
-	private static final double SIMULATION_SPEED = 1.;
+	private static final double SIMULATION_SPEED = 10.;
 	private final double TIME_BETWEEN_UPDATES = Constants.NANOSECONDS_PER_SECOND / (double) Constants.UPDATES_PER_SECOND
 			/ SIMULATION_SPEED;
 	private final double TARGET_TIME_BETWEEN_RENDERS = Constants.NANOSECONDS_PER_SECOND

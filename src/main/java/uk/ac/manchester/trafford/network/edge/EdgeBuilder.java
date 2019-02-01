@@ -29,6 +29,9 @@ public class EdgeBuilder {
 		Edge edge = new Edge(from.distance(to));
 		edge.speedLimit = speedLimit;
 		edge.accessController = accessController;
+		for (int i = 0; i < Edge.JOURNEY_TIMES; i++) {
+			edge.setLastJourneyTime(edge.getLength() / edge.speedLimit);
+		}
 		network.addVertex(from);
 		network.addVertex(to);
 		network.addEdge(from, to, edge);

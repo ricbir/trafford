@@ -76,7 +76,17 @@ public class SwingRenderer extends JFrame implements Renderer {
 				Point source = network.getEdgeSource(edge);
 				Point target = network.getEdgeTarget(edge);
 
-				g.setColor(Color.GRAY);
+				double congestion = edge.getCongestionCoefficient();
+				if (congestion > 0.75) {
+					g.setColor(Color.RED);
+				} else if (congestion > 0.5) {
+					g.setColor(Color.ORANGE);
+				} else if (congestion > 0.25) {
+					g.setColor(Color.YELLOW);
+				} else {
+					g.setColor(Color.GREEN);
+				}
+
 				g.drawLine(scale(source.getX()), scale(source.getY()), scale(target.getX()), scale(target.getY()));
 
 				switch (edge.getAccessState()) {

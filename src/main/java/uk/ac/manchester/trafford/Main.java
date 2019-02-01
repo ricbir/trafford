@@ -14,7 +14,7 @@ public class Main {
 
 	private static final Logger LOGGER = Logger.getLogger(Main.class.getPackage().getName());
 
-	private static RoadNetwork network = RoadNetworkBuilder.RoadNetwork().grid(4, 4, 20, 50).build();
+	private static RoadNetwork network = RoadNetworkBuilder.RoadNetwork().grid(3, 3, 100, 15).build();
 
 	public static void main(String[] args) throws InterruptedException, PathNotFoundException, NodeNotFoundException {
 		LOGGER.setLevel(Level.ALL);
@@ -30,7 +30,7 @@ public class Main {
 		edges = network.edgeSet().toArray(edges);
 
 		while (true) {
-			if (network.agentSetSnapshot().length < 500) {
+			if (network.agentSetSnapshot().length < 1000) {
 				int startEdgeIndex = (int) (Math.random() * edges.length);
 				int destinationEdgeIndex;
 				do {
