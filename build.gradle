@@ -5,12 +5,15 @@
  * For more details take a look at the Java Libraries chapter in the Gradle
  * user guide available at https://docs.gradle.org/4.3/userguide/java_library_plugin.html
  */
+plugins {
+	// Apply the java-library plugin to add support for Java Library
+	id 'java-library'
 
-// Apply the java-library plugin to add support for Java Library
-apply plugin: 'java-library'
-
-// Apply the jacoco plugin for code coverage
-apply plugin: 'jacoco'
+	// Apply the jacoco plugin for code coverage
+	// id 'jacoco'
+	id 'application'
+	id "org.openjfx.javafxplugin" version "0.0.7"
+}
 
 
 // In this section you declare where to find the dependencies of your project
@@ -32,6 +35,12 @@ dependencies {
     // Use Mockito
     testImplementation 'org.mockito:mockito-core:2.23.0'
 }
+
+javafx {
+    modules = [ 'javafx.controls' ]
+}
+
+mainClassName = 'Main'
 
 
 
