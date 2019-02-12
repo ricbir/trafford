@@ -124,15 +124,15 @@ public class TimedTrafficLightTest {
 	}
 
 	private void assertRed(EdgeAccessController controller) {
-		assertEquals(State.RED, controller.getState());
+		assertEquals(State.TL_RED, controller.getState());
 	}
 
 	private void assertGreen(EdgeAccessController controller) {
-		assertEquals(State.GREEN, controller.getState());
+		assertEquals(State.TL_GREEN, controller.getState());
 	}
 
 	private void assertYellow(EdgeAccessController controller) {
-		assertEquals(State.YELLOW, controller.getState());
+		assertEquals(State.TL_YELLOW, controller.getState());
 	}
 
 }

@@ -1,9 +1,21 @@
 package uk.ac.manchester.trafford;
 
-import uk.ac.manchester.trafford.network.RoadNetwork;
+public interface Renderer<T extends Model> {
+	public void render();
 
-public interface Renderer {
-	public void render(double interpolation);
+	public void setModel(T model);
 
-	public void setNetwork(RoadNetwork network);
+	public T getModel();
+
+	public void setScalingFactor(double scalingFactor);
+
+	public double getScalingFactor();
+
+	public void setTranslateX(double translateX);
+
+	public double getTranslateX();
+
+	public void setTranslateY(double translateY);
+
+	public double getTranslateY();
 }

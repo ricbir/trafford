@@ -14,7 +14,6 @@ import uk.ac.manchester.trafford.exceptions.PathNotFoundException;
 import uk.ac.manchester.trafford.network.Point;
 import uk.ac.manchester.trafford.network.RoadNetwork;
 import uk.ac.manchester.trafford.network.edge.Edge;
-import uk.ac.manchester.trafford.network.edge.EdgeAccessController;
 import uk.ac.manchester.trafford.network.edge.EdgePosition;
 
 public class Agent {
@@ -221,19 +220,28 @@ public class Agent {
 
 		if (nextEdge != null) {
 			double distanceToNextEdge = currentEdge.getLength() - distanceOnCurrentEdge;
-			if (nextEdge.getAccessState() != EdgeAccessController.State.GREEN) {
-				if (nextEdge.getAccessState() == EdgeAccessController.State.RED
-						|| distanceToNextEdge > speed * 3 - 30) {
+
+			switch (currentEdge.getAccessState()) {
+			case TL_RED:
+				nextEdgeInteractionTerm = getIDMInteractionTerm(0, distanceToNextEdge);
+				break;
+			case TL_YELLOW:
+				if (distanceToNextEdge > speed * 3 - 30) {
 					nextEdgeInteractionTerm = getIDMInteractionTerm(0, distanceToNextEdge);
+					break;
 				}
-			} else {
+			case TL_GREEN:
+			case FREE:
 				if (speed > nextEdge.getSpeedLimit()) {
 					nextEdgeInteractionTerm = getIDMInteractionTerm(nextEdge.getSpeedLimit(), distanceToNextEdge);
 				}
+				break;
 			}
 		}
 
-		if (leaderInteractionTerm > nextEdgeInteractionTerm) {
+		if (leaderInteractionTerm > nextEdgeInteractionTerm)
+
+		{
 			return maxAcceleration * (1 - freeRoadTerm - leaderInteractionTerm) / Constants.UPDATES_PER_SECOND;
 		} else {
 			return maxAcceleration * (1 - freeRoadTerm - nextEdgeInteractionTerm) / Constants.UPDATES_PER_SECOND;

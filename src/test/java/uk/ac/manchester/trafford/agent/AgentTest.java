@@ -65,7 +65,7 @@ public class AgentTest {
 		for (Edge edge : edges) {
 			when(edge.getLength()).thenReturn(100.);
 			when(edge.getSpeedLimit()).thenReturn(200.);
-			when(edge.getAccessState()).thenReturn(EdgeAccessController.State.GREEN);
+			when(edge.getAccessState()).thenReturn(EdgeAccessController.State.TL_GREEN);
 		}
 
 		edgeList.add(edge2);
@@ -261,7 +261,7 @@ public class AgentTest {
 	@Ignore
 	@Test
 	public void testStopAtRedLight() throws Exception {
-		when(edge2.getAccessState()).thenReturn(EdgeAccessController.State.RED);
+		when(edge2.getAccessState()).thenReturn(EdgeAccessController.State.TL_RED);
 		for (int i = 0; i < 500; i++) {
 			agent.move();
 		}
@@ -272,7 +272,7 @@ public class AgentTest {
 	@Ignore
 	@Test
 	public void testStopAtYellowLight() throws Exception {
-		when(edge2.getAccessState()).thenReturn(EdgeAccessController.State.YELLOW);
+		when(edge2.getAccessState()).thenReturn(EdgeAccessController.State.TL_YELLOW);
 		for (int i = 0; i < 500; i++) {
 			agent.move();
 		}
@@ -283,11 +283,11 @@ public class AgentTest {
 	@Ignore
 	@Test
 	public void testRunYellowLight() throws Exception {
-		when(edge2.getAccessState()).thenReturn(EdgeAccessController.State.GREEN);
+		when(edge2.getAccessState()).thenReturn(EdgeAccessController.State.TL_GREEN);
 		for (int i = 0; i < 500; i++) {
 			agent.move();
 			if (i == 400)
-				when(edge2.getAccessState()).thenReturn(EdgeAccessController.State.YELLOW);
+				when(edge2.getAccessState()).thenReturn(EdgeAccessController.State.TL_YELLOW);
 		}
 		assertEquals(edge2, agent.getEdgePosition().getEdge());
 	}

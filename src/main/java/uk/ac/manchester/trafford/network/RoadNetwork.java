@@ -18,7 +18,7 @@ import uk.ac.manchester.trafford.network.edge.Edge;
 import uk.ac.manchester.trafford.network.edge.EdgePosition;
 
 @SuppressWarnings("serial")
-public class RoadNetwork extends DefaultDirectedWeightedGraph<Point, Edge> {
+public class RoadNetwork extends DefaultDirectedWeightedGraph<Point, Edge> implements Model {
 	@SuppressWarnings("unused")
 	private static final Logger LOGGER = Logger.getLogger(RoadNetwork.class.getName());
 
@@ -62,10 +62,11 @@ public class RoadNetwork extends DefaultDirectedWeightedGraph<Point, Edge> {
 	 * 
 	 * @return The snapshot.
 	 */
-	public Agent[] agentSetSnapshot() {
+	public synchronized Agent[] agentSetSnapshot() {
 		return agents.toArray(new Agent[agents.size()]);
 	}
 
+	@Override
 	public synchronized void update() {
 		agents.addAll(agentAddSet);
 		agentAddSet.clear();

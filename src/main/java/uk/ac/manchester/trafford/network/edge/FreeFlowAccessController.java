@@ -4,7 +4,7 @@ public class FreeFlowAccessController implements EdgeAccessController {
 
 	@Override
 	public State getState() {
-		return State.GREEN;
+		return State.FREE;
 	}
 
 }

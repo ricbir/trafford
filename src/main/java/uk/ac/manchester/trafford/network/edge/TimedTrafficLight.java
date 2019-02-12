@@ -39,7 +39,7 @@ public class TimedTrafficLight implements Model {
 
 		controllers = new ArrayList<>(stages);
 		for (int i = 0; i < stages; i++) {
-			controllers.add(new TimedTrafficLightAccessController(State.RED));
+			controllers.add(new TimedTrafficLightAccessController(State.TL_RED));
 		}
 		this.controllerIterator = Iterables.cycle(controllers).iterator();
 		this.currentController = controllerIterator.next();
@@ -60,15 +60,15 @@ public class TimedTrafficLight implements Model {
 		}
 
 		switch (currentController.state) {
-		case YELLOW:
-			currentController.state = State.RED;
+		case TL_YELLOW:
+			currentController.state = State.TL_RED;
 			currentController = controllerIterator.next();
-		case RED:
-			currentController.state = State.GREEN;
+		case TL_RED:
+			currentController.state = State.TL_GREEN;
 			timer = greenUpdates;
 			break;
-		case GREEN:
-			currentController.state = State.YELLOW;
+		case TL_GREEN:
+			currentController.state = State.TL_YELLOW;
 			timer = yellowUpdates;
 		}
 	}
