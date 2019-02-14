@@ -4,16 +4,16 @@ import java.net.URL;
 import java.util.ResourceBundle;
 
 import javafx.animation.AnimationTimer;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Slider;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputControl;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Pane;
-import uk.ac.manchester.trafford.agent.Agent;
-import uk.ac.manchester.trafford.exceptions.NodeNotFoundException;
-import uk.ac.manchester.trafford.exceptions.PathNotFoundException;
 import uk.ac.manchester.trafford.network.RoadNetwork;
 import uk.ac.manchester.trafford.network.RoadNetworkBuilder;
 import uk.ac.manchester.trafford.network.edge.Edge;
@@ -48,8 +48,51 @@ public class ApplicationController {
 		renderer.setScalingFactor(renderer.getScalingFactor() + (scrollAmount * 0.00005));
 	}
 
-	double lastMouseX = 0;
-	double lastMouseY = 0;
+	private int agentNumber = 1000;
+	private int agentSpawnRate = 5;
+
+	@FXML
+	void onAgentNumberChanged(ActionEvent event) {
+		TextInputControl field = (TextField) event.getSource();
+		try {
+			agentNumber = Integer.parseInt(field.getText());
+		} catch (NumberFormatException e) {
+			field.setText(Integer.toString(agentNumber));
+		}
+	}
+
+	@FXML
+	void onAgentSpawnRateChanged(ActionEvent event) {
+		TextInputControl field = (TextField) event.getSource();
+		try {
+			agentSpawnRate = Integer.parseInt(field.getText());
+		} catch (NumberFormatException e) {
+			field.setText(Integer.toString(agentSpawnRate));
+		}
+	}
+
+	@FXML
+	void onAgentSpeedChanged(ActionEvent event) {
+		TextInputControl field = (TextField) event.getSource();
+		try {
+			network.setAgentSpeed(Double.parseDouble(field.getText()));
+		} catch (NumberFormatException e) {
+			field.setText(Double.toString(network.getAgentSpeed()));
+		}
+	}
+
+	@FXML
+	void onAgentSpeedVariabilityChanged(ActionEvent event) {
+		TextInputControl field = (TextField) event.getSource();
+		try {
+			network.setAgentSpeedVariability(Double.parseDouble(field.getText()));
+		} catch (NumberFormatException e) {
+			field.setText(Double.toString(network.getAgentSpeedVariability()));
+		}
+	}
+
+	private double lastMouseX = 0;
+	private double lastMouseY = 0;
 
 	@FXML
 	void onMouseDragged(MouseEvent event) {
@@ -67,8 +110,6 @@ public class ApplicationController {
 
 	@FXML
 	void initialize() {
-		assert simulationCanvas != null : "fx:id=\"simulationCanvas\" was not injected: check your FXML file 'main.fxml'.";
-
 		simulationCanvas.heightProperty().bind(simulationPane.heightProperty());
 		simulationCanvas.widthProperty().bind(simulationPane.widthProperty());
 
@@ -90,18 +131,20 @@ public class ApplicationController {
 					while (now - lastUpdateTime > (timeBetweenUpdates = (long) (Constants.NANOSECONDS_PER_SECOND
 							/ Constants.UPDATES_PER_SECOND / speedSlider.getValue()))) {
 						if (runButton.isSelected()) {
-							if (network.agentSetSnapshot().length < 1000) {
+							for (int i = 0; (i < Math.min(agentNumber - network.getNumberOfAgents(),
+									agentSpawnRate)); i++) {
 								edges = network.edgeSet().toArray(edges);
 								int startEdgeIndex = (int) (Math.random() * edges.length);
-								int destinationEdgeIndex;
+								int targetEdgeIndex;
 								do {
-									destinationEdgeIndex = (int) (Math.random() * edges.length);
-								} while (destinationEdgeIndex == startEdgeIndex);
+									targetEdgeIndex = (int) (Math.random() * edges.length);
+								} while (targetEdgeIndex == startEdgeIndex);
 
-								addAgent(new EdgePosition(edges[startEdgeIndex], edges[startEdgeIndex].getLength() / 2),
-										new EdgePosition(edges[destinationEdgeIndex],
-												edges[destinationEdgeIndex].getLength() / 2),
-										Math.random() * 20 + 10);
+								network.createAgent(
+										new EdgePosition(edges[startEdgeIndex],
+												edges[startEdgeIndex].getLength() * Math.random()),
+										new EdgePosition(edges[targetEdgeIndex],
+												edges[targetEdgeIndex].getLength() * Math.random()));
 							}
 
 							network.update();
@@ -127,13 +170,5 @@ public class ApplicationController {
 			}
 
 		}.start();
-	}
-
-	public void addAgent(EdgePosition source, EdgePosition target, double maxSpeed) {
-		try {
-			network.addAgent(new Agent(network, source, target, maxSpeed));
-		} catch (PathNotFoundException | NodeNotFoundException e) {
-			throw new IllegalArgumentException(e);
-		}
 	}
 }

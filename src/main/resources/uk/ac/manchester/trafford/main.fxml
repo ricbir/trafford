@@ -3,42 +3,141 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.Cursor?>
 <?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToolBar?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.FlowPane?>
-<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="458.0" prefWidth="674.0" style="-fx-background-color: #f1f1f1;" xmlns="http://javafx.com/javafx/10.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="uk.ac.manchester.trafford.ApplicationController">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="480.0" prefWidth="612.0" style="-fx-background-color: #f1f1f1;" xmlns="http://javafx.com/javafx/10.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="uk.ac.manchester.trafford.ApplicationController">
    <bottom>
-      <HBox alignment="CENTER_LEFT" spacing="20.0" BorderPane.alignment="CENTER">
-         <children>
+      <ToolBar BorderPane.alignment="CENTER">
+         <items>
             <ToggleButton fx:id="runButton" mnemonicParsing="false" text="Run" />
             <Slider fx:id="speedSlider" blockIncrement="5.0" majorTickUnit="10.0" max="50.0" min="1.0" minorTickCount="1" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="1.0">
                <padding>
                   <Insets top="4.0" />
                </padding>
             </Slider>
-         </children>
+         </items>
          <opaqueInsets>
             <Insets />
          </opaqueInsets>
-         <padding>
-            <Insets bottom="5.0" left="10.0" right="10.0" top="5.0" />
-         </padding></HBox>
+      </ToolBar>
    </bottom>
    <left>
-      <FlowPane prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER" />
+      <VBox maxWidth="200.0">
+         <children>
+            <Label text="Simulation Parameters">
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+            </Label>
+            <FlowPane alignment="CENTER_RIGHT" maxWidth="180.0">
+               <children>
+                  <Label text="Number">
+                     <opaqueInsets>
+                        <Insets />
+                     </opaqueInsets>
+                     <padding>
+                        <Insets right="10.0" />
+                     </padding>
+                  </Label>
+                  <TextField fx:id="agentNumber" onAction="#onAgentNumberChanged" prefWidth="50.0" text="1000" />
+               </children>
+               <VBox.margin>
+                  <Insets />
+               </VBox.margin>
+               <padding>
+                  <Insets top="10.0" />
+               </padding>
+            </FlowPane>
+            <FlowPane alignment="CENTER_RIGHT" maxWidth="180.0">
+               <children>
+                  <Label text="Spawn Rate">
+                     <padding>
+                        <Insets right="10.0" />
+                     </padding>
+                  </Label>
+                  <TextField fx:id="agentSpawnRate" onAction="#onAgentSpawnRateChanged" prefWidth="50.0" text="5" />
+               </children>
+               <VBox.margin>
+                  <Insets />
+               </VBox.margin>
+               <padding>
+                  <Insets top="10.0" />
+               </padding>
+            </FlowPane>
+            <FlowPane alignment="CENTER_RIGHT" layoutX="25.0" layoutY="76.0" maxWidth="180.0">
+               <children>
+                  <Label text="Speed">
+                     <padding>
+                        <Insets right="10.0" />
+                     </padding>
+                  </Label>
+                  <TextField fx:id="agentSpeed" onAction="#onAgentSpeedChanged" prefWidth="50.0" text="30" />
+               </children>
+               <padding>
+                  <Insets top="10.0" />
+               </padding>
+            </FlowPane>
+            <FlowPane alignment="CENTER_RIGHT" layoutX="25.0" layoutY="112.0" maxWidth="180.0">
+               <children>
+                  <Label text="Speed Variability">
+                     <padding>
+                        <Insets right="10.0" />
+                     </padding>
+                  </Label>
+                  <TextField fx:id="agentSpeedVariability" onAction="#onAgentSpeedVariabilityChanged" prefWidth="50.0" text="0.2" />
+               </children>
+               <padding>
+                  <Insets top="10.0" />
+               </padding>
+            </FlowPane>
+         </children>
+         <padding>
+            <Insets bottom="10.0" left="15.0" right="15.0" top="10.0" />
+         </padding>
+      </VBox>
    </left>
+   <top>
+      <MenuBar BorderPane.alignment="CENTER">
+        <menus>
+          <Menu mnemonicParsing="false" text="File">
+            <items>
+              <MenuItem mnemonicParsing="false" text="Close" />
+            </items>
+          </Menu>
+          <Menu mnemonicParsing="false" text="Edit">
+            <items>
+              <MenuItem mnemonicParsing="false" text="Delete" />
+            </items>
+          </Menu>
+          <Menu mnemonicParsing="false" text="Help">
+            <items>
+              <MenuItem mnemonicParsing="false" text="About" />
+            </items>
+          </Menu>
+        </menus>
+      </MenuBar>
+   </top>
    <center>
-      <Pane fx:id="simulationPane" prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: #ffffff;" BorderPane.alignment="CENTER">
+      <Pane fx:id="simulationPane" style="-fx-background-color: #ffffff;" BorderPane.alignment="CENTER">
          <children>
             <Canvas fx:id="simulationCanvas" height="400.0" onMouseDragged="#onMouseDragged" onMousePressed="#onMousePressed" onScroll="#onScroll" width="400.0">
                <cursor>
                   <Cursor fx:constant="OPEN_HAND" />
                </cursor>
             </Canvas>
-         </children></Pane>
+         </children>
+      </Pane>
    </center>
 </BorderPane>

@@ -27,6 +27,9 @@ public class RoadNetwork extends DefaultDirectedWeightedGraph<Point, Edge> imple
 	private Set<Agent> agentAddSet = new HashSet<>();
 	double averageCongestion = 0;
 
+	private double agentSpeed = 30;
+	private double agentSpeedVariability = 0.2;
+
 	private Set<Model> subscribers = new HashSet<>();
 
 	/**
@@ -40,8 +43,13 @@ public class RoadNetwork extends DefaultDirectedWeightedGraph<Point, Edge> imple
 		}
 	}
 
-	public void addAgent(Agent agent) {
-		agentAddSet.add(agent);
+	public void createAgent(EdgePosition source, EdgePosition target) {
+		try {
+			agentAddSet.add(
+					new Agent(this, source, target, agentSpeed + (Math.random() * agentSpeedVariability * agentSpeed)));
+		} catch (PathNotFoundException | NodeNotFoundException e) {
+			throw new IllegalArgumentException(e);
+		}
 	}
 
 	public void subscribe(Model subscriber) {
@@ -127,5 +135,25 @@ public class RoadNetwork extends DefaultDirectedWeightedGraph<Point, Edge> imple
 
 	public double getAverageCongestion() {
 		return averageCongestion;
+	}
+
+	public double getAgentSpeed() {
+		return agentSpeed;
+	}
+
+	public void setAgentSpeed(double agentSpeed) {
+		this.agentSpeed = agentSpeed;
+	}
+
+	public double getAgentSpeedVariability() {
+		return agentSpeedVariability;
+	}
+
+	public void setAgentSpeedVariability(double agentSpeedVariability) {
+		this.agentSpeedVariability = agentSpeedVariability;
+	}
+
+	public int getNumberOfAgents() {
+		return agents.size();
 	}
 }
