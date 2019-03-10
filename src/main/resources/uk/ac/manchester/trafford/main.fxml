@@ -51,7 +51,7 @@
                         <Insets right="10.0" />
                      </padding>
                   </Label>
-                  <TextField fx:id="agentNumber" onAction="#onAgentNumberChanged" prefWidth="50.0" text="1000" />
+                  <TextField fx:id="nAgentsField" prefWidth="50.0" text="1000" />
                </children>
                <VBox.margin>
                   <Insets />
@@ -67,7 +67,7 @@
                         <Insets right="10.0" />
                      </padding>
                   </Label>
-                  <TextField fx:id="agentSpawnRate" onAction="#onAgentSpawnRateChanged" prefWidth="50.0" text="5" />
+                  <TextField fx:id="spawnRateField" prefWidth="50.0" text="5" />
                </children>
                <VBox.margin>
                   <Insets />
@@ -83,7 +83,7 @@
                         <Insets right="10.0" />
                      </padding>
                   </Label>
-                  <TextField fx:id="agentSpeed" onAction="#onAgentSpeedChanged" prefWidth="50.0" text="30" />
+                  <TextField fx:id="agentSpeedField" prefWidth="50.0" text="30" />
                </children>
                <padding>
                   <Insets top="10.0" />
@@ -96,7 +96,7 @@
                         <Insets right="10.0" />
                      </padding>
                   </Label>
-                  <TextField fx:id="agentSpeedVariability" onAction="#onAgentSpeedVariabilityChanged" prefWidth="50.0" text="0.2" />
+                  <TextField fx:id="agentSpeedVariabilityField" prefWidth="50.0" text="0.2" />
                </children>
                <padding>
                   <Insets top="10.0" />
