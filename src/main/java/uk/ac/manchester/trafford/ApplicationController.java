@@ -7,8 +7,10 @@ import javafx.animation.AnimationTimer;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.Cursor;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
@@ -30,7 +32,6 @@ public class ApplicationController implements Initializable {
 	@FXML
 	private URL location;
 
-	@FXML
 	private Canvas simulationCanvas;
 
 	@FXML
@@ -63,36 +64,16 @@ public class ApplicationController implements Initializable {
 	private double lastMouseX = 0;
 	private double lastMouseY = 0;
 
-	@FXML
-	void onScroll(ScrollEvent event) {
-		double scrollAmount = event.getDeltaY();
-		renderer.setScalingFactor(renderer.getScalingFactor() + (scrollAmount * 0.00005));
-	}
-
-	@FXML
-	void onMouseDragged(MouseEvent event) {
-		renderer.setTranslateX(renderer.getTranslateX() + event.getX() - lastMouseX);
-		renderer.setTranslateY(renderer.getTranslateY() + event.getY() - lastMouseY);
-		lastMouseX = event.getX();
-		lastMouseY = event.getY();
-	}
-
-	@FXML
-	void onMousePressed(MouseEvent event) {
-		lastMouseX = event.getX();
-		lastMouseY = event.getY();
-	}
-
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
 		Bindings.bindBidirectional(nAgentsField.textProperty(), agentNumber, new NumberStringConverter());
 		Bindings.bindBidirectional(spawnRateField.textProperty(), agentSpawnRate, new NumberStringConverter());
 
-		agentSpeedField.textProperty().addListener((observable, oldValue, newValue) -> {
+		agentSpeedField.setOnAction(e -> {
 			try {
-				network.setAgentSpeed(Double.parseDouble(newValue));
-			} catch (NumberFormatException e) {
-				((TextField) observable).setText(oldValue);
+				network.setAgentSpeed(Double.parseDouble(agentSpeedField.getText()));
+			} catch (NumberFormatException nfe) {
+				agentSpeedField.setText(Double.toString(network.getAgentSpeed()));
 			}
 		});
 
@@ -100,12 +81,32 @@ public class ApplicationController implements Initializable {
 			try {
 				network.setAgentSpeedVariability(Double.parseDouble(newValue));
 			} catch (NumberFormatException e) {
-				((TextField) observable).setText(oldValue);
+				((StringProperty) observable).set(oldValue);
 			}
 		});
 
-		simulationCanvas.heightProperty().bind(simulationPane.heightProperty());
+		simulationCanvas = new ResizableCanvas();
+		simulationCanvas.setCursor(Cursor.OPEN_HAND);
 		simulationCanvas.widthProperty().bind(simulationPane.widthProperty());
+		simulationCanvas.heightProperty().bind(simulationPane.heightProperty());
+		simulationPane.getChildren().add(simulationCanvas);
+
+		simulationPane.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> {
+			lastMouseX = e.getX();
+			lastMouseY = e.getY();
+		});
+
+		simulationPane.addEventHandler(MouseEvent.MOUSE_DRAGGED, e -> {
+			renderer.setTranslateX(renderer.getTranslateX() + e.getX() - lastMouseX);
+			renderer.setTranslateY(renderer.getTranslateY() + e.getY() - lastMouseY);
+			lastMouseX = e.getX();
+			lastMouseY = e.getY();
+		});
+
+		simulationPane.addEventHandler(ScrollEvent.SCROLL, e -> {
+			double scrollAmount = e.getDeltaY();
+			renderer.setScalingFactor(renderer.getScalingFactor() + (scrollAmount * 0.00005));
+		});
 
 		network = RoadNetworkBuilder.RoadNetwork().grid(3, 3, 100, 15).build();
 		renderer = new CanvasRenderer(simulationCanvas.getGraphicsContext2D());

@@ -1,25 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.Cursor?>
-<?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.SeparatorMenuItem?>
 <?import javafx.scene.control.Slider?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.control.ToolBar?>
 <?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="480.0" prefWidth="612.0" style="-fx-background-color: #f1f1f1;" xmlns="http://javafx.com/javafx/10.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="uk.ac.manchester.trafford.ApplicationController">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" style="-fx-background-color: #f1f1f1;" xmlns="http://javafx.com/javafx/10.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="uk.ac.manchester.trafford.ApplicationController">
    <bottom>
-      <ToolBar BorderPane.alignment="CENTER">
+      <ToolBar maxHeight="52.0" BorderPane.alignment="CENTER">
          <items>
             <ToggleButton fx:id="runButton" mnemonicParsing="false" text="Run" />
             <Slider fx:id="speedSlider" blockIncrement="5.0" majorTickUnit="10.0" max="50.0" min="1.0" minorTickCount="1" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="1.0">
@@ -34,14 +35,40 @@
       </ToolBar>
    </bottom>
    <left>
-      <VBox maxWidth="200.0">
+      <VBox maxWidth="200.0" prefWidth="285.0">
          <children>
             <Label text="Simulation Parameters">
                <font>
                   <Font name="System Bold" size="14.0" />
                </font>
+               <VBox.margin>
+                  <Insets bottom="5.0" top="5.0" />
+               </VBox.margin>
             </Label>
-            <FlowPane alignment="CENTER_RIGHT" maxWidth="180.0">
+            <HBox alignment="CENTER">
+               <VBox.margin>
+                  <Insets left="-15.0" right="-15.0" top="10.0" />
+               </VBox.margin>
+               <children>
+                  <Separator HBox.hgrow="ALWAYS" />
+                  <Label text="Agents">
+                     <font>
+                        <Font name="System Bold" size="12.0" />
+                     </font>
+                     <padding>
+                        <Insets bottom="4.0" left="5.0" right="5.0" />
+                     </padding>
+                  </Label>
+                  <Separator layoutX="10.0" layoutY="10.0" HBox.hgrow="ALWAYS" />
+               </children>
+               <padding>
+                  <Insets bottom="4.0" top="4.0" />
+               </padding>
+            </HBox>
+            <HBox alignment="CENTER_LEFT">
+               <VBox.margin>
+                  <Insets />
+               </VBox.margin>
                <children>
                   <Label text="Number">
                      <opaqueInsets>
@@ -51,57 +78,158 @@
                         <Insets right="10.0" />
                      </padding>
                   </Label>
-                  <TextField fx:id="nAgentsField" prefWidth="50.0" text="1000" />
+                  <Pane HBox.hgrow="ALWAYS" />
+                  <TextField fx:id="nAgentsField" alignment="CENTER_RIGHT" prefWidth="50.0" text="1000" />
                </children>
+               <padding>
+                  <Insets bottom="4.0" top="4.0" />
+               </padding>
+            </HBox>
+            <HBox alignment="CENTER_LEFT">
                <VBox.margin>
                   <Insets />
                </VBox.margin>
-               <padding>
-                  <Insets top="10.0" />
-               </padding>
-            </FlowPane>
-            <FlowPane alignment="CENTER_RIGHT" maxWidth="180.0">
                <children>
                   <Label text="Spawn Rate">
                      <padding>
                         <Insets right="10.0" />
                      </padding>
                   </Label>
-                  <TextField fx:id="spawnRateField" prefWidth="50.0" text="5" />
+                  <Pane HBox.hgrow="ALWAYS" />
+                  <TextField fx:id="spawnRateField" alignment="CENTER_RIGHT" prefWidth="50.0" text="5" />
                </children>
-               <VBox.margin>
+               <padding>
+                  <Insets bottom="4.0" top="4.0" />
+               </padding>
+            </HBox>
+            <HBox alignment="CENTER_RIGHT" prefHeight="36.0" prefWidth="184.0">
+               <children>
+                  <Label text="Speed" />
+                  <Pane HBox.hgrow="ALWAYS" />
+                  <TextField fx:id="agentSpeedField" alignment="CENTER_RIGHT" prefWidth="50.0" text="30">
+                     <HBox.margin>
+                        <Insets left="10.0" />
+                     </HBox.margin>
+                  </TextField>
+                  <Label text="±">
+                     <HBox.margin>
+                        <Insets left="5.0" right="5.0" />
+                     </HBox.margin>
+                  </Label>
+                  <TextField fx:id="agentSpeedVariabilityField" alignment="CENTER_RIGHT" prefHeight="26.0" prefWidth="34.0" text="0.2">
+                     <HBox.margin>
+                        <Insets />
+                     </HBox.margin>
+                  </TextField>
+               </children>
+               <padding>
+                  <Insets bottom="4.0" top="4.0" />
+               </padding>
+            </HBox>
+            <HBox alignment="CENTER" layoutX="10.0" layoutY="66.0">
+               <children>
+                  <Separator HBox.hgrow="ALWAYS" />
+                  <Label text="Traffic Lights">
+                     <font>
+                        <Font name="System Bold" size="12.0" />
+                     </font>
+                     <padding>
+                        <Insets bottom="4.0" left="5.0" right="5.0" />
+                     </padding>
+                  </Label>
+                  <Separator layoutX="10.0" layoutY="10.0" HBox.hgrow="ALWAYS" />
+               </children>
+               <opaqueInsets>
                   <Insets />
+               </opaqueInsets>
+               <VBox.margin>
+                  <Insets left="-15.0" right="-15.0" />
                </VBox.margin>
                <padding>
-                  <Insets top="10.0" />
+                  <Insets bottom="4.0" top="4.0" />
                </padding>
-            </FlowPane>
-            <FlowPane alignment="CENTER_RIGHT" layoutX="25.0" layoutY="76.0" maxWidth="180.0">
+            </HBox>
+            <HBox alignment="CENTER_LEFT" layoutX="25.0" layoutY="122.0">
                <children>
-                  <Label text="Speed">
+                  <Label text="Green Time">
                      <padding>
                         <Insets right="10.0" />
                      </padding>
                   </Label>
-                  <TextField fx:id="agentSpeedField" prefWidth="50.0" text="30" />
+                  <Pane HBox.hgrow="ALWAYS" />
+                  <TextField fx:id="greenTimeField" alignment="CENTER_RIGHT" prefWidth="50.0" text="5" />
                </children>
                <padding>
-                  <Insets top="10.0" />
+                  <Insets bottom="4.0" top="4.0" />
                </padding>
-            </FlowPane>
-            <FlowPane alignment="CENTER_RIGHT" layoutX="25.0" layoutY="112.0" maxWidth="180.0">
+            </HBox>
+            <HBox alignment="CENTER_LEFT" layoutX="25.0" layoutY="255.0">
                <children>
-                  <Label text="Speed Variability">
+                  <Label text="Red Time">
                      <padding>
                         <Insets right="10.0" />
                      </padding>
                   </Label>
-                  <TextField fx:id="agentSpeedVariabilityField" prefWidth="50.0" text="0.2" />
+                  <Pane HBox.hgrow="ALWAYS" />
+                  <TextField fx:id="redTimeField" alignment="CENTER_RIGHT" prefWidth="50.0" text="5" />
                </children>
                <padding>
-                  <Insets top="10.0" />
+                  <Insets bottom="4.0" top="4.0" />
                </padding>
-            </FlowPane>
+            </HBox>
+            <HBox alignment="TOP_RIGHT" layoutX="25.0" layoutY="192.0">
+               <padding>
+                  <Insets bottom="4.0" top="4.0" />
+               </padding>
+               <children>
+                  <Button mnemonicParsing="false" text="Randomize" />
+               </children>
+            </HBox>
+            <HBox alignment="CENTER" layoutX="10.0" layoutY="225.0">
+               <children>
+                  <Separator HBox.hgrow="ALWAYS" />
+                  <Label text="Speed Limits">
+                     <font>
+                        <Font name="System Bold" size="12.0" />
+                     </font>
+                     <padding>
+                        <Insets bottom="4.0" left="5.0" right="5.0" />
+                     </padding>
+                  </Label>
+                  <Separator layoutX="10.0" layoutY="10.0" HBox.hgrow="ALWAYS" />
+               </children>
+               <opaqueInsets>
+                  <Insets />
+               </opaqueInsets>
+               <padding>
+                  <Insets bottom="4.0" top="4.0" />
+               </padding>
+               <VBox.margin>
+                  <Insets left="-15.0" right="-15.0" />
+               </VBox.margin>
+            </HBox>
+            <HBox alignment="CENTER_LEFT" layoutX="25.0" layoutY="255.0">
+               <children>
+                  <Label text="Global">
+                     <padding>
+                        <Insets right="10.0" />
+                     </padding>
+                  </Label>
+                  <Pane HBox.hgrow="ALWAYS" />
+                  <TextField fx:id="globalSpeedLimitField" alignment="CENTER_RIGHT" prefWidth="50.0" text="5" />
+               </children>
+               <padding>
+                  <Insets bottom="4.0" top="4.0" />
+               </padding>
+            </HBox>
+            <HBox alignment="TOP_RIGHT" layoutX="25.0" layoutY="322.0">
+               <padding>
+                  <Insets bottom="4.0" top="4.0" />
+               </padding>
+               <children>
+                  <Button mnemonicParsing="false" text="Randomize" />
+               </children>
+            </HBox>
          </children>
          <padding>
             <Insets bottom="10.0" left="15.0" right="15.0" top="10.0" />
@@ -113,31 +241,16 @@
         <menus>
           <Menu mnemonicParsing="false" text="File">
             <items>
+                  <MenuItem mnemonicParsing="false" text="Save (Ctrl + S)" />
+                  <MenuItem mnemonicParsing="false" text="Open (Ctrl + O)" />
+                  <SeparatorMenuItem mnemonicParsing="false" />
               <MenuItem mnemonicParsing="false" text="Close" />
-            </items>
-          </Menu>
-          <Menu mnemonicParsing="false" text="Edit">
-            <items>
-              <MenuItem mnemonicParsing="false" text="Delete" />
-            </items>
-          </Menu>
-          <Menu mnemonicParsing="false" text="Help">
-            <items>
-              <MenuItem mnemonicParsing="false" text="About" />
             </items>
           </Menu>
         </menus>
       </MenuBar>
    </top>
    <center>
-      <Pane fx:id="simulationPane" style="-fx-background-color: #ffffff;" BorderPane.alignment="CENTER">
-         <children>
-            <Canvas fx:id="simulationCanvas" height="400.0" onMouseDragged="#onMouseDragged" onMousePressed="#onMousePressed" onScroll="#onScroll" width="400.0">
-               <cursor>
-                  <Cursor fx:constant="OPEN_HAND" />
-               </cursor>
-            </Canvas>
-         </children>
-      </Pane>
+      <Pane fx:id="simulationPane" minHeight="600.0" minWidth="800.0" style="-fx-background-color: #ffffff;" BorderPane.alignment="CENTER" />
    </center>
 </BorderPane>
