@@ -61,7 +61,7 @@ public class TimedTrafficLightTest {
 
 		}
 
-		verify(network).subscribe(trafficLight);
+		verify(network).addTrafficLight(trafficLight);
 	}
 
 	@Test

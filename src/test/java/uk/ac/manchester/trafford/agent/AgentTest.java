@@ -198,7 +198,7 @@ public class AgentTest {
 	@Test
 	public void testMoveToNextEdge() throws Exception {
 		agent = new Agent(network, new EdgePosition(edge1, 0), new EdgePosition(edge3, 10), AGENT_SPEED);
-		agent = new Agent(network, new EdgePosition(edge1, 0), new EdgePosition(edge3, 10), AGENT_SPEED);
+		leader = new Agent(network, new EdgePosition(edge1, 0), new EdgePosition(edge3, 10), AGENT_SPEED);
 		leader.move();
 		agent.move();
 
@@ -231,11 +231,12 @@ public class AgentTest {
 	@Ignore
 	@Test
 	public void testKeepMinimumDistance() throws Exception {
-		// leader = new Agent(network, new EdgePosition(start.getEdge(),
+		agent = new Agent(network, new EdgePosition(edge1, 80), new EdgePosition(edge3, 100), AGENT_SPEED);
+		leader = new Agent(network, new EdgePosition(edge1, 80), new EdgePosition(edge3, 100), AGENT_SPEED);
 		// start.getDistance() + 10), destination, 0);
 		// agent.setLeader(leader);
 
-		for (int i = 0; i < 500; i++) {
+		for (int i = 0; i < Constants.UPDATES_PER_SECOND * 10; i++) {
 			agent.move();
 			double agentDistance = agent.getEdgePosition().getDistance();
 			double leaderDistance = leader.getEdgePosition().getDistance();
@@ -247,47 +248,63 @@ public class AgentTest {
 		}
 	}
 
-	@Ignore
 	@Test
 	public void testSlowDownForSpeedLimit() throws Exception {
+		agent = new Agent(network, new EdgePosition(edge1, 0), new EdgePosition(edge3, 100), AGENT_SPEED);
+
 		when(edge2.getSpeedLimit()).thenReturn(AGENT_SPEED - 2);
-		while (agent.getEdgePosition().getDistance() < edge1.getLength() - 0.1) {
+		while (agent.getEdgePosition().getDistance() < edge1.getLength() - 1) {
 			agent.move();
+			System.out.println(agent.getSpeed());
 		}
 		assertEquals(edge1, agent.getEdgePosition().getEdge());
-		assertEquals(AGENT_SPEED - 2, agent.getSpeed(), 0.1);
+		assertEquals(AGENT_SPEED - 2, agent.getSpeed(), 0.5);
 	}
 
-	@Ignore
 	@Test
 	public void testStopAtRedLight() throws Exception {
-		when(edge2.getAccessState()).thenReturn(EdgeAccessController.State.TL_RED);
-		for (int i = 0; i < 500; i++) {
+		agent = new Agent(network, new EdgePosition(edge1, 90), new EdgePosition(edge3, 100), AGENT_SPEED);
+
+		when(edge1.getAccessState()).thenReturn(EdgeAccessController.State.TL_RED);
+		for (int i = 0; i < Constants.UPDATES_PER_SECOND * 10; i++) {
 			agent.move();
 		}
 		assertEquals(edge1, agent.getEdgePosition().getEdge());
-		assertEquals(edge1.getLength(), agent.getEdgePosition().getDistance(), 0.1);
+		assertEquals(edge1.getLength(), agent.getEdgePosition().getDistance(), 1);
 	}
 
-	@Ignore
 	@Test
 	public void testStopAtYellowLight() throws Exception {
-		when(edge2.getAccessState()).thenReturn(EdgeAccessController.State.TL_YELLOW);
-		for (int i = 0; i < 500; i++) {
+		agent = new Agent(network, new EdgePosition(edge1, 80), new EdgePosition(edge3, 100), AGENT_SPEED);
+
+		when(edge1.getAccessState()).thenReturn(EdgeAccessController.State.TL_YELLOW);
+		for (int i = 0; i < Constants.UPDATES_PER_SECOND * 10; i++) {
 			agent.move();
 		}
 		assertEquals(edge1, agent.getEdgePosition().getEdge());
-		assertEquals(edge1.getLength(), agent.getEdgePosition().getDistance(), 0.1);
+		assertEquals(edge1.getLength(), agent.getEdgePosition().getDistance(), 1);
 	}
 
-	@Ignore
 	@Test
 	public void testRunYellowLight() throws Exception {
-		when(edge2.getAccessState()).thenReturn(EdgeAccessController.State.TL_GREEN);
-		for (int i = 0; i < 500; i++) {
+		agent = new Agent(network, new EdgePosition(edge1, 80), new EdgePosition(edge3, 100), AGENT_SPEED);
+
+		when(edge1.getAccessState()).thenReturn(EdgeAccessController.State.TL_GREEN);
+		for (int i = 0; i < Constants.UPDATES_PER_SECOND * 10; i++) {
 			agent.move();
-			if (i == 400)
+			if (agent.getEdgePosition().getDistance() > 99)
 				when(edge2.getAccessState()).thenReturn(EdgeAccessController.State.TL_YELLOW);
+		}
+		assertEquals(edge2, agent.getEdgePosition().getEdge());
+	}
+
+	@Test
+	public void testRunGreenLight() throws Exception {
+		agent = new Agent(network, new EdgePosition(edge1, 80), new EdgePosition(edge3, 100), AGENT_SPEED);
+
+		when(edge1.getAccessState()).thenReturn(EdgeAccessController.State.TL_GREEN);
+		for (int i = 0; i < Constants.UPDATES_PER_SECOND * 5; i++) {
+			agent.move();
 		}
 		assertEquals(edge2, agent.getEdgePosition().getEdge());
 	}
