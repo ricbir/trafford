@@ -233,7 +233,9 @@ public class Agent {
 			case TL_GREEN:
 			case FREE:
 				if (speed > nextEdge.getSpeedLimit()) {
-					nextEdgeInteractionTerm = getIDMInteractionTerm(nextEdge.getSpeedLimit(), distanceToNextEdge);
+					// Abstract speed limit as another vehicle
+					nextEdgeInteractionTerm = getIDMInteractionTerm(nextEdge.getSpeedLimit(),
+							distanceToNextEdge + Constants.MINIMUM_SPACING);
 				}
 				break;
 			}
