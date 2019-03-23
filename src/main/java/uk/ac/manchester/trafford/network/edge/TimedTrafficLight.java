@@ -15,6 +15,8 @@ public class TimedTrafficLight implements Model {
 
 	private int greenUpdates;
 	private int yellowUpdates;
+	private int greenSeconds;
+	private int yellowSeconds;
 
 	RoadNetwork network;
 
@@ -34,6 +36,9 @@ public class TimedTrafficLight implements Model {
 		this.network = network;
 		network.addTrafficLight(this);
 
+		this.greenSeconds = greenSeconds;
+		this.yellowSeconds = yellowSeconds;
+
 		this.greenUpdates = greenSeconds * Constants.UPDATES_PER_SECOND;
 		this.yellowUpdates = yellowSeconds * Constants.UPDATES_PER_SECOND;
 
@@ -43,6 +48,24 @@ public class TimedTrafficLight implements Model {
 		}
 		this.controllerIterator = Iterables.cycle(controllers).iterator();
 		this.currentController = controllerIterator.next();
+	}
+
+	public void SetGreenSeconds(int seconds) {
+		greenSeconds = seconds;
+		greenUpdates = greenSeconds * Constants.UPDATES_PER_SECOND;
+	}
+
+	public void SetYellowSeconds(int seconds) {
+		yellowSeconds = seconds;
+		yellowUpdates = yellowSeconds * Constants.UPDATES_PER_SECOND;
+	}
+
+	public int GetGreenSeconds() {
+		return greenSeconds;
+	}
+
+	public int GetYellowSeconds() {
+		return yellowSeconds;
 	}
 
 	public int stages() {

@@ -27,6 +27,8 @@ public class Agent {
 	private EdgePosition source;
 	private EdgePosition target;
 
+	protected int mSize = 160;
+
 	// private List<Agent> watchlist = new ArrayList<>(5);
 	private Agent leader = null;
 	private Agent follower = null;
@@ -334,5 +336,14 @@ public class Agent {
 		}
 		return String.format("name: %s, source: %s, target: %s, currEdge: %s, dist: %3.2f, x: N/A, y: N/A, speed: %.2f",
 				name, source, target, currentEdge, distanceOnCurrentEdge, speed);
+	}
+
+	/**
+	 * Return the size of the agent
+	 * 
+	 * @return
+	 */
+	public int getSize() {
+		return mSize;
 	}
 }
