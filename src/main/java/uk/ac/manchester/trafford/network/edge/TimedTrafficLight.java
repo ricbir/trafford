@@ -13,8 +13,8 @@ import uk.ac.manchester.trafford.network.edge.EdgeAccessController.State;
 
 public class TimedTrafficLight implements Model {
 
-	private final int greenUpdates;
-	private final int yellowUpdates;
+	private int greenUpdates;
+	private int yellowUpdates;
 
 	RoadNetwork network;
 
@@ -32,7 +32,7 @@ public class TimedTrafficLight implements Model {
 		}
 
 		this.network = network;
-		network.subscribe(this);
+		network.addTrafficLight(this);
 
 		this.greenUpdates = greenSeconds * Constants.UPDATES_PER_SECOND;
 		this.yellowUpdates = yellowSeconds * Constants.UPDATES_PER_SECOND;
@@ -70,7 +70,19 @@ public class TimedTrafficLight implements Model {
 		case TL_GREEN:
 			currentController.state = State.TL_YELLOW;
 			timer = yellowUpdates;
+			break;
+		default:
+			currentController.state = State.TL_RED;
+			break;
 		}
+	}
+
+	public void setGreenTime(double seconds) {
+		this.greenUpdates = (int) Math.round(seconds * Constants.UPDATES_PER_SECOND);
+	}
+
+	public void setYellowTime(double seconds) {
+		this.yellowUpdates = (int) Math.round(seconds * Constants.UPDATES_PER_SECOND);
 	}
 
 	private class TimedTrafficLightAccessController implements EdgeAccessController {

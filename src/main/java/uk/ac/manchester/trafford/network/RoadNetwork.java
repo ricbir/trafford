@@ -16,6 +16,7 @@ import uk.ac.manchester.trafford.exceptions.NodeNotFoundException;
 import uk.ac.manchester.trafford.exceptions.PathNotFoundException;
 import uk.ac.manchester.trafford.network.edge.Edge;
 import uk.ac.manchester.trafford.network.edge.EdgePosition;
+import uk.ac.manchester.trafford.network.edge.TimedTrafficLight;
 
 @SuppressWarnings("serial")
 public class RoadNetwork extends DefaultDirectedWeightedGraph<Point, Edge> implements Model {
@@ -30,7 +31,7 @@ public class RoadNetwork extends DefaultDirectedWeightedGraph<Point, Edge> imple
 	private double agentSpeed = 30;
 	private double agentSpeedVariability = 0.2;
 
-	private Set<Model> subscribers = new HashSet<>();
+	private Set<TimedTrafficLight> trafficLights = new HashSet<>();
 
 	/**
 	 * Create a road network of given type and based on a graph.
@@ -52,16 +53,14 @@ public class RoadNetwork extends DefaultDirectedWeightedGraph<Point, Edge> imple
 		}
 	}
 
-	public void subscribe(Model subscriber) {
-		synchronized (subscribers) {
-			subscribers.add(subscriber);
+	public void addTrafficLight(TimedTrafficLight trafficLight) {
+		synchronized (trafficLight) {
+			trafficLights.add(trafficLight);
 		}
 	}
 
-	public void unsubscribe(Model subscriber) {
-		synchronized (subscribers) {
-			subscribers.remove(subscriber);
-		}
+	public Set<TimedTrafficLight> getTrafficLights() {
+		return trafficLights;
 	}
 
 	/**
@@ -102,8 +101,8 @@ public class RoadNetwork extends DefaultDirectedWeightedGraph<Point, Edge> imple
 		}
 		averageCongestion /= totalLength;
 
-		synchronized (subscribers) {
-			for (Model subscriber : subscribers) {
+		synchronized (trafficLights) {
+			for (TimedTrafficLight subscriber : trafficLights) {
 				subscriber.update();
 			}
 		}
