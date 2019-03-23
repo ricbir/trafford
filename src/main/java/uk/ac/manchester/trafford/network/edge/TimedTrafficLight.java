@@ -15,7 +15,6 @@ public class TimedTrafficLight implements Model {
 
 	private int greenUpdates;
 	private int yellowUpdates;
-
 	private int greenSeconds;
 	private int yellowSeconds;
 
@@ -35,7 +34,7 @@ public class TimedTrafficLight implements Model {
 		}
 
 		this.network = network;
-		network.subscribe(this);
+		network.addTrafficLight(this);
 
 		this.greenSeconds = greenSeconds;
 		this.yellowSeconds = yellowSeconds;
@@ -94,7 +93,19 @@ public class TimedTrafficLight implements Model {
 		case TL_GREEN:
 			currentController.state = State.TL_YELLOW;
 			timer = yellowUpdates;
+			break;
+		default:
+			currentController.state = State.TL_RED;
+			break;
 		}
+	}
+
+	public void setGreenTime(double seconds) {
+		this.greenUpdates = (int) Math.round(seconds * Constants.UPDATES_PER_SECOND);
+	}
+
+	public void setYellowTime(double seconds) {
+		this.yellowUpdates = (int) Math.round(seconds * Constants.UPDATES_PER_SECOND);
 	}
 
 	private class TimedTrafficLightAccessController implements EdgeAccessController {

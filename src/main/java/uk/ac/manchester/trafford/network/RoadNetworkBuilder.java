@@ -1,11 +1,17 @@
 package uk.ac.manchester.trafford.network;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 import uk.ac.manchester.trafford.Constants;
 import uk.ac.manchester.trafford.network.edge.Edge;
 import uk.ac.manchester.trafford.network.edge.TimedTrafficLight;
 import uk.ac.manchester.trafford.util.Convert;
 
 public class RoadNetworkBuilder {
+
+	@SuppressWarnings("unused")
+	private static final Logger LOGGER = LogManager.getLogger(RoadNetworkBuilder.class);
 
 	private RoadNetwork network;
 
@@ -41,8 +47,18 @@ public class RoadNetworkBuilder {
 		// | |
 		// S_OUT S_IN
 
-		for (int x = 0; x < columns * lengthCentimeters; x += lengthCentimeters) {
-			for (int y = 0; y < rows * lengthCentimeters; y += lengthCentimeters) {
+		TimedTrafficLight[][] trafficLights = new TimedTrafficLight[columns][rows];
+
+		for (int i = 0; i < columns; i++) {
+			for (int j = 0; j < rows; j++) {
+				trafficLights[i][j] = new TimedTrafficLight(10, 3, 2, network);
+			}
+		}
+
+		for (int column = 0; column < columns; column++) {
+			int x = column * lengthCentimeters;
+			for (int row = 0; row < rows; row++) {
+				int y = row * lengthCentimeters;
 				Point nOut = new Point(x + XingOffset.N_OUT.x, y + XingOffset.N_OUT.y);
 				Point nIn = new Point(x + XingOffset.N_IN.x, y + XingOffset.N_IN.y);
 				Point sOut = new Point(x + XingOffset.S_OUT.x, y + XingOffset.S_OUT.y);
@@ -52,15 +68,13 @@ public class RoadNetworkBuilder {
 				Point wOut = new Point(x + XingOffset.W_OUT.x, y + XingOffset.W_OUT.y);
 				Point wIn = new Point(x + XingOffset.W_IN.x, y + XingOffset.W_IN.y);
 
-				TimedTrafficLight trafficLight = new TimedTrafficLight(10, 3, 2, network);
-
 				if (y > 0) {
 					Edge.build(nOut, new Point(x + XingOffset.S_IN.x, y - lengthCentimeters + XingOffset.S_IN.y))
-							.speedLimit(speedLimit).accessController(trafficLight.getController(0))
-							.trafficLight(trafficLight).addToNetwork(network);
+							.speedLimit(speedLimit).accessController(trafficLights[column][row - 1].getController(0))
+							.trafficLight(trafficLights[column][row - 1]).addToNetwork(network);
 					Edge.build(new Point(x + XingOffset.S_OUT.x, y - lengthCentimeters + XingOffset.S_OUT.y), nIn)
-							.speedLimit(speedLimit).accessController(trafficLight.getController(0))
-							.trafficLight(trafficLight).addToNetwork(network);
+							.speedLimit(speedLimit).accessController(trafficLights[column][row].getController(0))
+							.trafficLight(trafficLights[column][row]).addToNetwork(network);
 
 					if (y < (rows - 1) * lengthCentimeters) {
 						Edge.build(nIn, sOut).speedLimit(speedLimit).addToNetwork(network);
@@ -74,13 +88,14 @@ public class RoadNetworkBuilder {
 						Edge.build(nIn, wOut).speedLimit(3).addToNetwork(network);
 					}
 				}
+
 				if (x > 0) {
 					Edge.build(wOut, new Point(x - lengthCentimeters + XingOffset.E_IN.x, y + XingOffset.E_IN.y)) //
-							.speedLimit(speedLimit).accessController(trafficLight.getController(1))
-							.trafficLight(trafficLight).addToNetwork(network); //
+							.speedLimit(speedLimit).accessController(trafficLights[column - 1][row].getController(1))
+							.trafficLight(trafficLights[column - 1][row]).addToNetwork(network); //
 					Edge.build(new Point(x - lengthCentimeters + XingOffset.E_OUT.x, y + XingOffset.E_OUT.y), wIn) //
-							.speedLimit(speedLimit).accessController(trafficLight.getController(1))
-							.trafficLight(trafficLight).addToNetwork(network); //
+							.speedLimit(speedLimit).accessController(trafficLights[column][row].getController(1))
+							.trafficLight(trafficLights[column][row]).addToNetwork(network); //
 
 					if (x < (columns - 1) * lengthCentimeters) {
 						Edge.build(wIn, eOut).speedLimit(speedLimit).addToNetwork(network);

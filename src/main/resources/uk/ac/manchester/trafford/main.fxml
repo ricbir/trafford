@@ -116,11 +116,16 @@
                         <Insets left="5.0" right="5.0" />
                      </HBox.margin>
                   </Label>
-                  <TextField fx:id="agentSpeedVariabilityField" alignment="CENTER_RIGHT" prefHeight="26.0" prefWidth="34.0" text="0.2">
+                  <TextField fx:id="agentSpeedVariabilityField" alignment="CENTER_RIGHT" prefHeight="26.0" prefWidth="34.0" text="20">
                      <HBox.margin>
                         <Insets />
                      </HBox.margin>
                   </TextField>
+                  <Label text="\%">
+                     <HBox.margin>
+                        <Insets left="5.0" />
+                     </HBox.margin>
+                  </Label>
                </children>
                <padding>
                   <Insets bottom="4.0" top="4.0" />
@@ -165,13 +170,13 @@
             </HBox>
             <HBox alignment="CENTER_LEFT" layoutX="25.0" layoutY="255.0">
                <children>
-                  <Label text="Red Time">
+                  <Label text="Yellow Time">
                      <padding>
                         <Insets right="10.0" />
                      </padding>
                   </Label>
                   <Pane HBox.hgrow="ALWAYS" />
-                  <TextField fx:id="redTimeField" alignment="CENTER_RIGHT" prefWidth="50.0" text="5" />
+                  <TextField fx:id="yellowTimeField" alignment="CENTER_RIGHT" prefWidth="50.0" text="5" />
                </children>
                <padding>
                   <Insets bottom="4.0" top="4.0" />
@@ -182,7 +187,7 @@
                   <Insets bottom="4.0" top="4.0" />
                </padding>
                <children>
-                  <Button mnemonicParsing="false" text="Randomize" />
+                  <Button fx:id="randomizeTimingsButton" mnemonicParsing="false" text="Randomize" />
                </children>
             </HBox>
             <HBox alignment="CENTER" layoutX="10.0" layoutY="225.0">

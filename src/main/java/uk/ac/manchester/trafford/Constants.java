@@ -1,7 +1,7 @@
 package uk.ac.manchester.trafford;
 
 public class Constants {
-	public static final int UPDATES_PER_SECOND = 500;
+	public static final int UPDATES_PER_SECOND = 50;
 	public static final int RENDERS_PER_SECOND = 30;
 
 	public static final double SPATIAL_SENSITIVITY = 0.0005;

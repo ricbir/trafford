@@ -39,6 +39,8 @@ dependencies {
     implementation 'org.jgrapht:jgrapht-core:1.2.0'
     // Google Java libraries
     implementation 'com.google.guava:guava:27.0-jre'
+    
+    implementation 'log4j:log4j:1.2.16'
 
     // Use JUnit test framework
     testImplementation 'junit:junit:4.12'

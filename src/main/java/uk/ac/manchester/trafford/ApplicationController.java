@@ -3,15 +3,18 @@ package uk.ac.manchester.trafford;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 import javafx.animation.AnimationTimer;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Cursor;
 import javafx.scene.canvas.Canvas;
+import javafx.scene.control.Button;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
@@ -26,8 +29,12 @@ import uk.ac.manchester.trafford.network.RoadNetwork;
 import uk.ac.manchester.trafford.network.RoadNetworkBuilder;
 import uk.ac.manchester.trafford.network.edge.Edge;
 import uk.ac.manchester.trafford.network.edge.EdgePosition;
+import uk.ac.manchester.trafford.network.edge.TimedTrafficLight;
 
 public class ApplicationController implements Initializable {
+
+	@SuppressWarnings("unused")
+	private static final Logger LOGGER = LogManager.getLogger(ApplicationController.class);
 
 	@FXML
 	private ResourceBundle resources;
@@ -63,6 +70,15 @@ public class ApplicationController implements Initializable {
 	@FXML
 	private TextField agentSpeedVariabilityField;
 
+	@FXML
+	private TextField greenTimeField;
+
+	@FXML
+	private TextField yellowTimeField;
+
+	@FXML
+	private Button randomizeTimingsButton;
+
 	private IntegerProperty agentNumber = new SimpleIntegerProperty(1);
 	private IntegerProperty agentSpawnRate = new SimpleIntegerProperty(1);
 
@@ -71,23 +87,69 @@ public class ApplicationController implements Initializable {
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
+		LOGGER.debug(">>> ENTER initialize (" + location + ", " + resources + ")");
 		Bindings.bindBidirectional(nAgentsField.textProperty(), agentNumber, new NumberStringConverter());
 		Bindings.bindBidirectional(spawnRateField.textProperty(), agentSpawnRate, new NumberStringConverter());
 
 		agentSpeedField.setOnAction(e -> {
+			LOGGER.debug(">>> ENTER [agentSpeedField.onAction] (" + e + ")");
 			try {
 				network.setAgentSpeed(Double.parseDouble(agentSpeedField.getText()));
 			} catch (NumberFormatException nfe) {
+				LOGGER.debug("Could not parse \"" + agentSpeedField.getText() + "\"", nfe);
 				agentSpeedField.setText(Double.toString(network.getAgentSpeed()));
 			}
+			LOGGER.debug("<<< EXIT [agentSpeedField.onAction]");
 		});
 
-		agentSpeedVariabilityField.textProperty().addListener((observable, oldValue, newValue) -> {
+		agentSpeedVariabilityField.setOnAction(e -> {
+			LOGGER.debug(">>> ENTER [agentSpeedVariabilityField.onAction] (" + e + ")");
 			try {
-				network.setAgentSpeedVariability(Double.parseDouble(newValue));
-			} catch (NumberFormatException e) {
-				((StringProperty) observable).set(oldValue);
+				network.setAgentSpeedVariability(Double.parseDouble(agentSpeedVariabilityField.getText()) / 100);
+			} catch (NumberFormatException nfe) {
+				LOGGER.debug("Could not parse \"" + agentSpeedField.getText() + "\"", nfe);
+				agentSpeedVariabilityField.setText(Double.toString(network.getAgentSpeedVariability() * 100));
 			}
+			LOGGER.debug("<<< EXIT [agentSpeedField.onAction]");
+		});
+
+		greenTimeField.setOnAction(e -> {
+			LOGGER.debug(">>> ENTER [greenTimeField.onAction] (" + e + ")");
+			double seconds;
+			try {
+				seconds = Double.parseDouble(greenTimeField.getText());
+				for (TimedTrafficLight trafficLight : network.getTrafficLights()) {
+					trafficLight.setGreenTime(seconds);
+				}
+				System.out.println("GREEN TIME: " + seconds);
+			} catch (NumberFormatException nfe) {
+				LOGGER.debug("Could not parse \"" + agentSpeedField.getText() + "\"", nfe);
+				greenTimeField.setText(Double.toString(network.getAgentSpeed()));
+			}
+			LOGGER.debug("<<< EXIT [greenTimeField.onAction]");
+		});
+
+		yellowTimeField.setOnAction(e -> {
+			LOGGER.debug(">>> ENTER [yellowTimeField.onAction] (" + e + ")");
+			double seconds;
+			try {
+				seconds = Double.parseDouble(yellowTimeField.getText());
+				for (TimedTrafficLight trafficLight : network.getTrafficLights()) {
+					trafficLight.setYellowTime(seconds);
+				}
+			} catch (NumberFormatException nfe) {
+				LOGGER.debug("Could not parse \"" + agentSpeedField.getText() + "\"", nfe);
+				yellowTimeField.setText(Double.toString(network.getAgentSpeed()));
+			}
+			LOGGER.debug("<<< EXIT [yellowTimeField.onAction]");
+		});
+
+		randomizeTimingsButton.setOnAction(e -> {
+			LOGGER.debug(">>> ENTER [randomizeTimingsButton.onAction] (" + e + ")");
+			for (TimedTrafficLight trafficLight : network.getTrafficLights()) {
+				trafficLight.setGreenTime(Math.random() * 60);
+			}
+			LOGGER.debug("<<< EXIT [randomizeTimingsButton.onAction]");
 		});
 
 		simulationCanvas = new ResizableCanvas();
@@ -101,27 +163,31 @@ public class ApplicationController implements Initializable {
 		// simulationArea.setCursor(Cursor.OPEN_HAND);
 		simulationPane.getChildren().add(simulationArea);
 
-		simulationPane.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> {
+		simulationPane.setOnMousePressed(e -> {
+			LOGGER.debug(">>> ENTER [simulationPane.setOnMousePressed] (" + e + ")");
 			lastMouseX = e.getX();
 			lastMouseY = e.getY();
+			LOGGER.debug("<<< EXIT [simulationPane.setOnMousePressed]");
 		});
 
-		simulationPane.addEventHandler(MouseEvent.MOUSE_DRAGGED, e -> {
+		simulationPane.setOnMouseDragged(e -> {
+			LOGGER.debug(">>> ENTER [simulationPane.setOnMouseDragged] (" + e + ")");
 			renderer.setTranslateX(renderer.getTranslateX() + e.getX() - lastMouseX);
 			renderer.setTranslateY(renderer.getTranslateY() + e.getY() - lastMouseY);
 			lastMouseX = e.getX();
 			lastMouseY = e.getY();
+			LOGGER.debug("<<< EXIT [simulationPane.setOnMouseDragged]");
 		});
 
-		simulationPane.addEventHandler(ScrollEvent.SCROLL, e -> {
+		simulationPane.setOnScroll(e -> {
+			LOGGER.debug(">>> ENTER [simulationPane.setOnScroll] (" + e + ")");
 			double scrollAmount = e.getDeltaY();
 			renderer.setScalingFactor(renderer.getScalingFactor() + (scrollAmount * 0.00005));
+			LOGGER.debug("<<< EXIT [simulationPane.setOnScroll]");
 		});
 
-		network = RoadNetworkBuilder.RoadNetwork().grid(3, 3, 100, 15).build();
-		// renderer = new CanvasRenderer(simulationCanvas.getGraphicsContext2D());
+		network = RoadNetworkBuilder.RoadNetwork().grid(8, 8, 100, 15).build();
 		renderer = new PaneRenderer(simulationArea);
-
 		renderer.setModel(network);
 
 		Runnable updateModelTask = new Runnable() {
@@ -130,6 +196,7 @@ public class ApplicationController implements Initializable {
 
 			@Override
 			public void run() {
+				LOGGER.debug(">>> ENTER run");
 				while (!Thread.interrupted()) {
 					long now = System.nanoTime();
 					long timeBetweenUpdates;
@@ -163,6 +230,7 @@ public class ApplicationController implements Initializable {
 						break;
 					}
 				}
+				LOGGER.debug(">>> EXIT run");
 			}
 		};
 
@@ -176,5 +244,7 @@ public class ApplicationController implements Initializable {
 			}
 
 		}.start();
+
+		LOGGER.debug("<<< EXIT initialize");
 	}
 }
