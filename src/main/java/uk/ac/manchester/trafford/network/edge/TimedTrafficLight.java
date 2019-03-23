@@ -13,8 +13,11 @@ import uk.ac.manchester.trafford.network.edge.EdgeAccessController.State;
 
 public class TimedTrafficLight implements Model {
 
-	private final int greenUpdates;
-	private final int yellowUpdates;
+	private int greenUpdates;
+	private int yellowUpdates;
+
+	private int greenSeconds;
+	private int yellowSeconds;
 
 	RoadNetwork network;
 
@@ -34,6 +37,9 @@ public class TimedTrafficLight implements Model {
 		this.network = network;
 		network.subscribe(this);
 
+		this.greenSeconds = greenSeconds;
+		this.yellowSeconds = yellowSeconds;
+
 		this.greenUpdates = greenSeconds * Constants.UPDATES_PER_SECOND;
 		this.yellowUpdates = yellowSeconds * Constants.UPDATES_PER_SECOND;
 
@@ -43,6 +49,24 @@ public class TimedTrafficLight implements Model {
 		}
 		this.controllerIterator = Iterables.cycle(controllers).iterator();
 		this.currentController = controllerIterator.next();
+	}
+
+	public void SetGreenSeconds(int seconds) {
+		greenSeconds = seconds;
+		greenUpdates = greenSeconds * Constants.UPDATES_PER_SECOND;
+	}
+
+	public void SetYellowSeconds(int seconds) {
+		yellowSeconds = seconds;
+		yellowUpdates = yellowSeconds * Constants.UPDATES_PER_SECOND;
+	}
+
+	public int GetGreenSeconds() {
+		return greenSeconds;
+	}
+
+	public int GetYellowSeconds() {
+		return yellowSeconds;
 	}
 
 	public int stages() {

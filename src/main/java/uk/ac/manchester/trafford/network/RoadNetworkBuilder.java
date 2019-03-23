@@ -57,10 +57,10 @@ public class RoadNetworkBuilder {
 				if (y > 0) {
 					Edge.build(nOut, new Point(x + XingOffset.S_IN.x, y - lengthCentimeters + XingOffset.S_IN.y))
 							.speedLimit(speedLimit).accessController(trafficLight.getController(0))
-							.addToNetwork(network);
+							.trafficLight(trafficLight).addToNetwork(network);
 					Edge.build(new Point(x + XingOffset.S_OUT.x, y - lengthCentimeters + XingOffset.S_OUT.y), nIn)
 							.speedLimit(speedLimit).accessController(trafficLight.getController(0))
-							.addToNetwork(network);
+							.trafficLight(trafficLight).addToNetwork(network);
 
 					if (y < (rows - 1) * lengthCentimeters) {
 						Edge.build(nIn, sOut).speedLimit(speedLimit).addToNetwork(network);
@@ -77,10 +77,10 @@ public class RoadNetworkBuilder {
 				if (x > 0) {
 					Edge.build(wOut, new Point(x - lengthCentimeters + XingOffset.E_IN.x, y + XingOffset.E_IN.y)) //
 							.speedLimit(speedLimit).accessController(trafficLight.getController(1))
-							.addToNetwork(network); //
+							.trafficLight(trafficLight).addToNetwork(network); //
 					Edge.build(new Point(x - lengthCentimeters + XingOffset.E_OUT.x, y + XingOffset.E_OUT.y), wIn) //
 							.speedLimit(speedLimit).accessController(trafficLight.getController(1))
-							.addToNetwork(network); //
+							.trafficLight(trafficLight).addToNetwork(network); //
 
 					if (x < (columns - 1) * lengthCentimeters) {
 						Edge.build(wIn, eOut).speedLimit(speedLimit).addToNetwork(network);

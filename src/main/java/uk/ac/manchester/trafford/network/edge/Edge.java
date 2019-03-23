@@ -22,6 +22,7 @@ public class Edge extends DefaultWeightedEdge {
 
 	protected double speedLimit;
 	protected EdgeAccessController accessController;
+	protected TimedTrafficLight mTrafficLight = null;
 
 	private Agent lastAgent = null;
 
@@ -84,6 +85,10 @@ public class Edge extends DefaultWeightedEdge {
 		return speedLimit;
 	}
 
+	public void setSpeedLimith(double value) {
+		this.speedLimit = value;
+	}
+
 	public Agent getLastAgent() {
 		return lastAgent;
 	}
@@ -92,5 +97,9 @@ public class Edge extends DefaultWeightedEdge {
 	public String toString() {
 		return "{ source: " + getSource() + ", target: " + getTarget() + ", length: " + length + ", s/l: " + speedLimit
 				+ " }";
+	}
+
+	public TimedTrafficLight getTrafficLight() {
+		return mTrafficLight;
 	}
 }

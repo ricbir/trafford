@@ -2,8 +2,9 @@ package uk.ac.manchester.trafford;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -14,13 +15,19 @@ import uk.ac.manchester.trafford.exceptions.NodeNotFoundException;
 import uk.ac.manchester.trafford.exceptions.PathNotFoundException;
 
 public class Main extends Application {
+	private static final Logger _logger = LogManager.getLogger(Main.class);
 
-	private static final Logger LOGGER = Logger.getLogger(Main.class.getPackage().getName());
+	// private static final Logger LOGGER =
+	// Logger.getLogger(Main.class.getPackage().getName());
+
 	public static final ExecutorService EXECUTOR_SERVICE = Executors.newFixedThreadPool(4);
 
 	public static void main(String[] args) throws InterruptedException, PathNotFoundException, NodeNotFoundException {
-		LOGGER.setLevel(Level.ALL);
+		// LOGGER.setLevel(Level.ALL);
+		// org.apache.log4j.BasicConfigurator.configure();
+		_logger.debug(">>> ENTER: main");
 		launch();
+		_logger.debug("<<< EXIT: main");
 	}
 
 	@Override

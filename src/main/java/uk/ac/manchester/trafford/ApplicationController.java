@@ -17,7 +17,10 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
 import javafx.util.converter.NumberStringConverter;
 import uk.ac.manchester.trafford.network.RoadNetwork;
 import uk.ac.manchester.trafford.network.RoadNetworkBuilder;
@@ -33,6 +36,8 @@ public class ApplicationController implements Initializable {
 	private URL location;
 
 	private Canvas simulationCanvas;
+
+	private Pane simulationArea;
 
 	@FXML
 	private Pane simulationPane;
@@ -89,7 +94,12 @@ public class ApplicationController implements Initializable {
 		simulationCanvas.setCursor(Cursor.OPEN_HAND);
 		simulationCanvas.widthProperty().bind(simulationPane.widthProperty());
 		simulationCanvas.heightProperty().bind(simulationPane.heightProperty());
-		simulationPane.getChildren().add(simulationCanvas);
+		// simulationPane.getChildren().add(simulationCanvas);
+
+		simulationArea = new ResizablePane();
+		simulationArea.setBackground(new Background(new BackgroundFill(Color.AZURE, null, null)));
+		// simulationArea.setCursor(Cursor.OPEN_HAND);
+		simulationPane.getChildren().add(simulationArea);
 
 		simulationPane.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> {
 			lastMouseX = e.getX();
@@ -109,7 +119,8 @@ public class ApplicationController implements Initializable {
 		});
 
 		network = RoadNetworkBuilder.RoadNetwork().grid(3, 3, 100, 15).build();
-		renderer = new CanvasRenderer(simulationCanvas.getGraphicsContext2D());
+		// renderer = new CanvasRenderer(simulationCanvas.getGraphicsContext2D());
+		renderer = new PaneRenderer(simulationArea);
 
 		renderer.setModel(network);
 
