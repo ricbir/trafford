@@ -1,5 +1,6 @@
 package uk.ac.manchester.trafford;
 
+import java.io.File;
 import java.net.URL;
 import java.util.ResourceBundle;
 
@@ -10,26 +11,32 @@ import javafx.animation.AnimationTimer;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Cursor;
 import javafx.scene.canvas.Canvas;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.MenuBar;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
+import javafx.stage.FileChooser;
 import javafx.util.converter.NumberStringConverter;
 import uk.ac.manchester.trafford.network.RoadNetwork;
 import uk.ac.manchester.trafford.network.RoadNetworkBuilder;
 import uk.ac.manchester.trafford.network.edge.Edge;
 import uk.ac.manchester.trafford.network.edge.EdgePosition;
 import uk.ac.manchester.trafford.network.edge.TimedTrafficLight;
+import uk.ac.manchester.trafford.pojo.EdgePojo;
+import uk.ac.manchester.trafford.pojo.NetworkPojo;
+import uk.ac.manchester.trafford.pojo.TrafficLightPojo;
 
 public class ApplicationController implements Initializable {
 
@@ -41,6 +48,9 @@ public class ApplicationController implements Initializable {
 
 	@FXML
 	private URL location;
+
+	@FXML
+	protected MenuBar menuBar;
 
 	private Canvas simulationCanvas;
 
@@ -246,5 +256,100 @@ public class ApplicationController implements Initializable {
 		}.start();
 
 		LOGGER.debug("<<< EXIT initialize");
+	}
+
+	/**
+	 * Show an alert with given data
+	 * 
+	 * @param title
+	 * @param header
+	 * @param content
+	 */
+	public static void showMessage(String title, String header, String content) {
+		LOGGER.debug(">>> ENTER [showMessage]");
+		Alert alert = new Alert(AlertType.INFORMATION);
+		alert.setTitle(title);
+		alert.setHeaderText(header);
+		alert.setContentText(content);
+		alert.showAndWait();
+		LOGGER.debug("<<< EXT [showMessage]");
+	}
+
+	@FXML
+	private void handleMenuOpenAction(ActionEvent event) {
+		LOGGER.debug(">>> ENTER [handleMenuOpenAction]");
+		// If running this action cannot be executed
+		if (runButton.isSelected()) {
+			showMessage("WARNING", "Action error", "Cannot open network while running simulation!");
+			LOGGER.debug("<<< EXIT [handleMenuOpenAction]");
+			return;
+		}
+
+		FileChooser fileChooser = new FileChooser();
+		fileChooser.setTitle("Open Resource File");
+		File file = fileChooser.showOpenDialog(simulationPane.getScene().getWindow());
+
+		LOGGER.debug("Opening file [" + file + "]");
+
+		try {
+
+			NetworkPojo net = NetworkPojo.Deserialize(file);
+
+			for (Edge edge : this.network.edgeSet()) {
+				EdgePojo ep = net.getEdgeById(edge.getId());
+				if (ep != null) {
+					edge.setSpeedLimith(ep.speedLimit);
+					if (edge.getTrafficLight() != null) {
+						TrafficLightPojo tlp = net.getTrafficlightById(edge.getTrafficLight().getId());
+						if (tlp != null) {
+							edge.getTrafficLight().SetGreenSeconds(tlp.greenSeconds);
+							edge.getTrafficLight().SetYellowSeconds(tlp.yellowSeconds);
+						}
+					}
+				}
+
+			}
+
+		} catch (Exception ex) {
+			LOGGER.error(ex);
+		}
+
+		LOGGER.debug("<<< EXIT [handleMenuOpenAction]");
+	}
+
+	@FXML
+	private void handleMenuSaveAction(ActionEvent event) {
+		LOGGER.debug(">>> ENTER [handleMenuSaveAction]");
+		if (runButton.isSelected()) {
+			showMessage("WARNING", "Action error", "Cannot save network while running simulation!");
+			LOGGER.debug("<<< EXIT [handleMenuOpenAction]");
+			return;
+		}
+
+		FileChooser fileChooser = new FileChooser();
+		fileChooser.setTitle("Open Resource File");
+		File file = fileChooser.showSaveDialog(simulationPane.getScene().getWindow());
+
+		LOGGER.debug("Saving to file [" + file + "]");
+
+		try {
+
+			NetworkPojo net = new NetworkPojo();
+
+			for (Edge edge : this.network.edgeSet()) {
+				net.edgeList.add(new EdgePojo(edge.getId(), edge.getSpeedLimit()));
+				if (edge.getTrafficLight() != null) {
+					net.trafficlightList.add(new TrafficLightPojo(edge.getTrafficLight().getId(),
+							edge.getTrafficLight().GetGreenSeconds(), edge.getTrafficLight().GetYellowSeconds()));
+				}
+			}
+
+			NetworkPojo.Serialize(file, net);
+
+		} catch (Exception ex) {
+			LOGGER.error(ex);
+		}
+
+		LOGGER.debug("<<< EXIT [handleMenuSaveAction]");
 	}
 }

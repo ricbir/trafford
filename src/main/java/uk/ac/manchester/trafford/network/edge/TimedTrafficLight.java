@@ -18,6 +18,11 @@ public class TimedTrafficLight implements Model {
 	private int greenSeconds;
 	private int yellowSeconds;
 
+	/**
+	 * Unique id for the traffic light
+	 */
+	protected int mId = 0;
+
 	RoadNetwork network;
 
 	private List<TimedTrafficLightAccessController> controllers;
@@ -25,7 +30,8 @@ public class TimedTrafficLight implements Model {
 	private TimedTrafficLightAccessController currentController;
 	private int timer = 0;
 
-	public TimedTrafficLight(int greenSeconds, int yellowSeconds, int stages, RoadNetwork network) {
+	public TimedTrafficLight(int id, int greenSeconds, int yellowSeconds, int stages, RoadNetwork network) {
+		mId = id;
 		if (stages < 2) {
 			throw new IllegalArgumentException("Timed traffic light must have at least two stages");
 		}
@@ -48,6 +54,10 @@ public class TimedTrafficLight implements Model {
 		}
 		this.controllerIterator = Iterables.cycle(controllers).iterator();
 		this.currentController = controllerIterator.next();
+	}
+
+	public int getId() {
+		return mId;
 	}
 
 	public void SetGreenSeconds(int seconds) {
@@ -101,10 +111,12 @@ public class TimedTrafficLight implements Model {
 	}
 
 	public void setGreenTime(double seconds) {
+		this.greenSeconds = (int) seconds;
 		this.greenUpdates = (int) Math.round(seconds * Constants.UPDATES_PER_SECOND);
 	}
 
 	public void setYellowTime(double seconds) {
+		this.yellowSeconds = (int) seconds;
 		this.yellowUpdates = (int) Math.round(seconds * Constants.UPDATES_PER_SECOND);
 	}
 

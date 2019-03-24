@@ -49,11 +49,15 @@ public class RoadNetworkBuilder {
 
 		TimedTrafficLight[][] trafficLights = new TimedTrafficLight[columns][rows];
 
+		int counter = 0;
+
 		for (int i = 0; i < columns; i++) {
 			for (int j = 0; j < rows; j++) {
-				trafficLights[i][j] = new TimedTrafficLight(10, 3, 2, network);
+				trafficLights[i][j] = new TimedTrafficLight(++counter, 10, 3, 2, network);
 			}
 		}
+
+		counter = 0;
 
 		for (int column = 0; column < columns; column++) {
 			int x = column * lengthCentimeters;
@@ -71,70 +75,70 @@ public class RoadNetworkBuilder {
 				if (y > 0) {
 					Edge.build(nOut, new Point(x + XingOffset.S_IN.x, y - lengthCentimeters + XingOffset.S_IN.y))
 							.speedLimit(speedLimit).accessController(trafficLights[column][row - 1].getController(0))
-							.trafficLight(trafficLights[column][row - 1]).addToNetwork(network);
+							.trafficLight(trafficLights[column][row - 1]).addToNetwork(++counter, network);
 					Edge.build(new Point(x + XingOffset.S_OUT.x, y - lengthCentimeters + XingOffset.S_OUT.y), nIn)
 							.speedLimit(speedLimit).accessController(trafficLights[column][row].getController(0))
-							.trafficLight(trafficLights[column][row]).addToNetwork(network);
+							.trafficLight(trafficLights[column][row]).addToNetwork(++counter, network);
 
 					if (y < (rows - 1) * lengthCentimeters) {
-						Edge.build(nIn, sOut).speedLimit(speedLimit).addToNetwork(network);
+						Edge.build(nIn, sOut).speedLimit(speedLimit).addToNetwork(++counter, network);
 					}
 
 					if (x < (columns - 1) * lengthCentimeters) {
-						Edge.build(nIn, eOut).speedLimit(3).addToNetwork(network);
+						Edge.build(nIn, eOut).speedLimit(3).addToNetwork(++counter, network);
 					}
 
 					if (x > 0) {
-						Edge.build(nIn, wOut).speedLimit(3).addToNetwork(network);
+						Edge.build(nIn, wOut).speedLimit(3).addToNetwork(++counter, network);
 					}
 				}
 
 				if (x > 0) {
 					Edge.build(wOut, new Point(x - lengthCentimeters + XingOffset.E_IN.x, y + XingOffset.E_IN.y)) //
 							.speedLimit(speedLimit).accessController(trafficLights[column - 1][row].getController(1))
-							.trafficLight(trafficLights[column - 1][row]).addToNetwork(network); //
+							.trafficLight(trafficLights[column - 1][row]).addToNetwork(++counter, network); //
 					Edge.build(new Point(x - lengthCentimeters + XingOffset.E_OUT.x, y + XingOffset.E_OUT.y), wIn) //
 							.speedLimit(speedLimit).accessController(trafficLights[column][row].getController(1))
-							.trafficLight(trafficLights[column][row]).addToNetwork(network); //
+							.trafficLight(trafficLights[column][row]).addToNetwork(++counter, network); //
 
 					if (x < (columns - 1) * lengthCentimeters) {
-						Edge.build(wIn, eOut).speedLimit(speedLimit).addToNetwork(network);
+						Edge.build(wIn, eOut).speedLimit(speedLimit).addToNetwork(++counter, network);
 					}
 
 					if (y < (rows - 1) * lengthCentimeters) {
-						Edge.build(wIn, sOut).speedLimit(3).addToNetwork(network);
+						Edge.build(wIn, sOut).speedLimit(3).addToNetwork(++counter, network);
 					}
 
 					if (y > 0) {
-						Edge.build(wIn, nOut).speedLimit(3).addToNetwork(network);
+						Edge.build(wIn, nOut).speedLimit(3).addToNetwork(++counter, network);
 					}
 				}
 
 				if (x < (columns - 1) * lengthCentimeters) {
 					if (y < (rows - 1) * lengthCentimeters) {
-						Edge.build(eIn, sOut).speedLimit(3).addToNetwork(network);
+						Edge.build(eIn, sOut).speedLimit(3).addToNetwork(++counter, network);
 					}
 
 					if (y > 0) {
-						Edge.build(eIn, nOut).speedLimit(3).addToNetwork(network);
+						Edge.build(eIn, nOut).speedLimit(3).addToNetwork(++counter, network);
 					}
 
 					if (x > 0) {
-						Edge.build(eIn, wOut).speedLimit(speedLimit).addToNetwork(network);
+						Edge.build(eIn, wOut).speedLimit(speedLimit).addToNetwork(++counter, network);
 					}
 				}
 
 				if (y < (rows - 1) * lengthCentimeters) {
 					if (x < (columns - 1) * lengthCentimeters) {
-						Edge.build(sIn, eOut).speedLimit(3).addToNetwork(network);
+						Edge.build(sIn, eOut).speedLimit(3).addToNetwork(++counter, network);
 					}
 
 					if (y > 0) {
-						Edge.build(sIn, nOut).speedLimit(speedLimit).addToNetwork(network);
+						Edge.build(sIn, nOut).speedLimit(speedLimit).addToNetwork(++counter, network);
 					}
 
 					if (x > 0) {
-						Edge.build(sIn, wOut).speedLimit(3).addToNetwork(network);
+						Edge.build(sIn, wOut).speedLimit(3).addToNetwork(++counter, network);
 					}
 				}
 
