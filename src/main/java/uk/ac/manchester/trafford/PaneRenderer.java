@@ -88,6 +88,7 @@ public class PaneRenderer implements Renderer<RoadNetwork> {
 								Stage stage = new Stage();
 								stage.initModality(Modality.APPLICATION_MODAL);
 								stage.initStyle(StageStyle.UNIFIED);
+								stage.setResizable(false);
 								stage.setTitle("Trafficlight");
 								stage.setScene(new Scene(root1));
 								stage.show();
@@ -231,6 +232,7 @@ public class PaneRenderer implements Renderer<RoadNetwork> {
 								Stage stage = new Stage();
 								stage.initModality(Modality.APPLICATION_MODAL);
 								stage.initStyle(StageStyle.UNIFIED);
+								stage.setResizable(false);
 								stage.setTitle("Street");
 								stage.setScene(new Scene(root1));
 								stage.show();
@@ -259,7 +261,7 @@ public class PaneRenderer implements Renderer<RoadNetwork> {
 
 	@Override
 	public void setScalingFactor(double scalingFactor) {
-		if (scalingFactor < 0.02) {
+		if (scalingFactor < 0) {
 			return;
 		}
 		this.scalingFactor = scalingFactor;

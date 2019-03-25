@@ -18,6 +18,11 @@ public class Edge extends DefaultWeightedEdge {
 
 	public static final int JOURNEY_TIMES = 20;
 
+	/**
+	 * Unique ID for this edge
+	 */
+	protected int mId = 0;
+
 	private final double length;
 
 	protected double speedLimit;
@@ -32,8 +37,13 @@ public class Edge extends DefaultWeightedEdge {
 		return new EdgeBuilder(from, to);
 	}
 
-	Edge(double length) {
+	Edge(int id, double length) {
+		mId = id;
 		this.length = length;
+	}
+
+	public int getId() {
+		return mId;
 	}
 
 	public void setLastAgent(Agent agent) {

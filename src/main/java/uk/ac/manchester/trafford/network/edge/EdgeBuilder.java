@@ -31,8 +31,8 @@ public class EdgeBuilder {
 		return this;
 	}
 
-	public Edge addToNetwork(RoadNetwork network) {
-		Edge edge = new Edge(from.distance(to));
+	public Edge addToNetwork(int id, RoadNetwork network) {
+		Edge edge = new Edge(id, from.distance(to));
 		edge.speedLimit = speedLimit;
 		edge.accessController = accessController;
 		edge.mTrafficLight = this.mTrafficLight;
