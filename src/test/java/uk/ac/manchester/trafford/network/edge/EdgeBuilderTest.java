@@ -13,7 +13,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import uk.ac.manchester.trafford.network.Point;
+import uk.ac.manchester.trafford.network.Vertex;
 import uk.ac.manchester.trafford.network.RoadNetwork;
 
 public class EdgeBuilderTest {
@@ -22,8 +22,8 @@ public class EdgeBuilderTest {
 
 	private Edge edge;
 
-	private Point from = new Point(0, 0);
-	private Point to = new Point(0, 10);
+	private Vertex from = new Vertex(0, 0);
+	private Vertex to = new Vertex(0, 10);
 
 	@Mock
 	private RoadNetwork network;

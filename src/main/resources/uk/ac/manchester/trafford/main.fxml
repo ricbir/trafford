@@ -17,17 +17,22 @@
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
 
 <BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" style="-fx-background-color: #f1f1f1;" xmlns="http://javafx.com/javafx/10.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="uk.ac.manchester.trafford.ApplicationController">
    <bottom>
       <ToolBar maxHeight="52.0" BorderPane.alignment="CENTER">
          <items>
             <ToggleButton fx:id="runButton" mnemonicParsing="false" text="Run" />
+            <Separator orientation="VERTICAL" />
             <Slider fx:id="speedSlider" blockIncrement="5.0" majorTickUnit="10.0" max="50.0" min="1.0" minorTickCount="1" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="1.0">
                <padding>
                   <Insets top="4.0" />
                </padding>
             </Slider>
+            <Separator layoutX="51.0" layoutY="10.0" orientation="VERTICAL" />
+            <Label text="Congestion coefficient:" />
+            <Text fx:id="congestionCoefficient" strokeType="OUTSIDE" strokeWidth="0.0" text="0" />
          </items>
          <opaqueInsets>
             <Insets />
@@ -246,16 +251,16 @@
         <menus>
           <Menu mnemonicParsing="false" text="File">
             <items>
-                  <MenuItem mnemonicParsing="false" text="Save (Ctrl + S)" onAction="#handleMenuSaveAction"/>
-                  <MenuItem mnemonicParsing="false" text="Open (Ctrl + O)" onAction="#handleMenuOpenAction"/>
+                  <MenuItem mnemonicParsing="false" onAction="#handleMenuSaveAction" text="Save (Ctrl + S)" />
+                  <MenuItem mnemonicParsing="false" onAction="#handleMenuOpenAction" text="Open (Ctrl + O)" />
                   <SeparatorMenuItem mnemonicParsing="false" />
-              <MenuItem mnemonicParsing="false" text="Close" />
+              <MenuItem fx:id="close" mnemonicParsing="false" text="Close" />
             </items>
           </Menu>
         </menus>
       </MenuBar>
    </top>
    <center>
-      <Pane fx:id="simulationPane" minHeight="600.0" minWidth="800.0" style="-fx-background-color: #ffffff;" BorderPane.alignment="CENTER" />
+      <Pane fx:id="simulationPane" prefHeight="606.0" prefWidth="772.0" style="-fx-background-color: #ffffff;" BorderPane.alignment="CENTER" />
    </center>
 </BorderPane>

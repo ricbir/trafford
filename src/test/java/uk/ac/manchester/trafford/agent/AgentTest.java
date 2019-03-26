@@ -25,7 +25,7 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import uk.ac.manchester.trafford.Constants;
-import uk.ac.manchester.trafford.network.Point;
+import uk.ac.manchester.trafford.network.Vertex;
 import uk.ac.manchester.trafford.network.RoadNetwork;
 import uk.ac.manchester.trafford.network.edge.Edge;
 import uk.ac.manchester.trafford.network.edge.EdgeAccessController;
@@ -39,7 +39,7 @@ public class AgentTest {
 	@Mock
 	private RoadNetwork network;
 	@Mock
-	private GraphPath<Point, Edge> path;
+	private GraphPath<Vertex, Edge> path;
 
 	@Mock
 	private Edge edge1;
@@ -75,8 +75,8 @@ public class AgentTest {
 
 	@Test
 	public void testAgentInitialization() throws Exception {
-		Point pathSource = Mockito.mock(Point.class);
-		Point pathTarget = Mockito.mock(Point.class);
+		Vertex pathSource = Mockito.mock(Vertex.class);
+		Vertex pathTarget = Mockito.mock(Vertex.class);
 		when(network.getEdgeTarget(edge1)).thenReturn(pathSource);
 		when(network.getEdgeSource(edge3)).thenReturn(pathTarget);
 

@@ -40,7 +40,7 @@ public class EdgeTest {
 	@Before
 	public void setUp() throws Exception {
 		MockitoAnnotations.initMocks(this);
-	}
+	}s
 
 	@After
 	public void tearDown() throws Exception {

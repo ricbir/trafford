@@ -6,8 +6,7 @@
  * user guide available at https://docs.gradle.org/4.3/userguide/java_library_plugin.html
  */
 plugins {
-	// Apply the java-library plugin to add support for Java Library
-	id 'java-library'
+	id 'java'
 
 	// Apply the jacoco plugin for code coverage
 	// id 'jacoco'
@@ -33,21 +32,18 @@ dependencies {
     //implementation 'org.apache.logging.log4j:log4j-api:1.2.13'
     //implementation 'org.apache.logging.log4j:log4j-core:1.2.13'
     
-    implementation 'log4j:log4j:1.2.16'
+    compile 'log4j:log4j:1.2.16'
 
 	// JGraphT
-    implementation 'org.jgrapht:jgrapht-core:1.2.0'
+    compile 'org.jgrapht:jgrapht-core:1.2.0'
+    compile 'org.jgrapht:jgrapht-io:1.2.0'
+    
     // Google Java libraries
-    implementation 'com.google.guava:guava:27.0-jre'
+    compile 'com.google.guava:guava:27.0-jre'
     
-    implementation 'log4j:log4j:1.2.16'
+    compile 'log4j:log4j:1.2.16'
     
-    // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.8'
-    // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-annotations
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: '2.9.8'
-    // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.9.8'
+    compile 'eu.lestard:advanced-bindings:0.4.0'
 
     // Use JUnit test framework
     testImplementation 'junit:junit:4.12'
@@ -58,6 +54,20 @@ dependencies {
 javafx {
     modules = [ 'javafx.controls', 'javafx.fxml' ]
 }
+
+jar {
+    from {
+		configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+	}
+	manifest {
+		attributes(
+			'Main-Class': 'uk.ac.manchester.trafford.Main'
+	)
+  }
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 mainClassName = 'uk.ac.manchester.trafford.Main'
 

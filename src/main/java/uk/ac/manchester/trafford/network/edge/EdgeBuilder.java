@@ -1,17 +1,17 @@
 package uk.ac.manchester.trafford.network.edge;
 
-import uk.ac.manchester.trafford.network.Point;
 import uk.ac.manchester.trafford.network.RoadNetwork;
+import uk.ac.manchester.trafford.network.Vertex;
 
 public class EdgeBuilder {
 
-	private Point from;
-	private Point to;
+	private Vertex from;
+	private Vertex to;
 	private double speedLimit = 200;
 	private EdgeAccessController accessController = new FreeFlowAccessController();
 	private TimedTrafficLight mTrafficLight = null;
 
-	EdgeBuilder(Point from, Point to) {
+	EdgeBuilder(Vertex from, Vertex to) {
 		this.from = from;
 		this.to = to;
 	}
@@ -31,18 +31,23 @@ public class EdgeBuilder {
 		return this;
 	}
 
-	public Edge addToNetwork(int id, RoadNetwork network) {
-		Edge edge = new Edge(id, from.distance(to));
+	public Edge addToNetwork(RoadNetwork network) {
+		Edge edge = build();
+		network.addVertex(from);
+		network.addVertex(to);
+		network.addEdge(from, to, edge);
+		network.setEdgeWeight(edge, from.distance(to) / edge.speedLimit);
+		return edge;
+	}
+
+	public Edge build() {
+		Edge edge = new Edge();
 		edge.speedLimit = speedLimit;
 		edge.accessController = accessController;
 		edge.mTrafficLight = this.mTrafficLight;
 		for (int i = 0; i < Edge.JOURNEY_TIMES; i++) {
-			edge.setLastJourneyTime(edge.getLength() / edge.speedLimit);
+			edge.setLastJourneyTime(from.distance(to) / edge.speedLimit);
 		}
-		network.addVertex(from);
-		network.addVertex(to);
-		network.addEdge(from, to, edge);
-		network.setEdgeWeight(edge, edge.getLength() / edge.getSpeedLimit());
 		return edge;
 	}
 }

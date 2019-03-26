@@ -19,7 +19,7 @@ import uk.ac.manchester.trafford.network.edge.EdgePosition;
 import uk.ac.manchester.trafford.network.edge.TimedTrafficLight;
 
 @SuppressWarnings("serial")
-public class RoadNetwork extends DefaultDirectedWeightedGraph<Point, Edge> implements Model {
+public class RoadNetwork extends DefaultDirectedWeightedGraph<Vertex, Edge> implements Model {
 	@SuppressWarnings("unused")
 	private static final Logger LOGGER = Logger.getLogger(RoadNetwork.class.getName());
 
@@ -108,23 +108,22 @@ public class RoadNetwork extends DefaultDirectedWeightedGraph<Point, Edge> imple
 		}
 	}
 
-	public Point getCoordinates(Agent agent) {
+	public Vertex getCoordinates(Agent agent) {
 		EdgePosition position = agent.getEdgePosition();
 		Edge edge = position.getEdge();
 		if (edge == null) {
 			return null;
 		}
 		double distance = position.getDistance();
-		Point source = getEdgeSource(edge);
-		Point target = getEdgeTarget(edge);
+		Vertex source = getEdgeSource(edge);
+		Vertex target = getEdgeTarget(edge);
 
-		return new Point(
-				(int) Math.round(distance / edge.getLength() * (target.getX() - source.getX()) + source.getX()),
-				(int) Math.round(distance / edge.getLength() * (target.getY() - source.getY()) + source.getY()));
+		return new Vertex(distance / edge.getLength() * (target.getX() - source.getX()) + source.getX(),
+				distance / edge.getLength() * (target.getY() - source.getY()) + source.getY());
 	}
 
-	public GraphPath<Point, Edge> getShortestPath(Point source, Point target) throws NodeNotFoundException {
-		ShortestPathAlgorithm<Point, Edge> shortestPath = new DijkstraShortestPath<Point, Edge>(this);
+	public GraphPath<Vertex, Edge> getShortestPath(Vertex source, Vertex target) throws NodeNotFoundException {
+		ShortestPathAlgorithm<Vertex, Edge> shortestPath = new DijkstraShortestPath<Vertex, Edge>(this);
 		try {
 			return shortestPath.getPath(source, target);
 		} catch (IllegalArgumentException e) {

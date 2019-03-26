@@ -35,8 +35,8 @@ public class RoadNetworkTest {
 
 	@Test
 	public void testGetCoordinatesDiagonal() throws NodeNotFoundException {
-		Point source = new Point(0, 0);
-		Point target = new Point(200, 200);
+		Vertex source = new Vertex(0, 0);
+		Vertex target = new Vertex(200, 200);
 		network.addVertex(source);
 		network.addVertex(target);
 		network.addEdge(source, target, edge);
@@ -44,13 +44,13 @@ public class RoadNetworkTest {
 		when(agent.getEdgePosition()).thenReturn(new EdgePosition(edge, Math.sqrt(2)));
 		when(edge.getLength()).thenReturn(source.distance(target));
 
-		assertEquals(new Point(100, 100), network.getCoordinates(agent));
+		assertEquals(new Vertex(100, 100), network.getCoordinates(agent));
 	}
 
 	@Test
 	public void testGetCoordinatesXAxis() throws NodeNotFoundException {
-		Point source = new Point(0, 0);
-		Point target = new Point(200, 0);
+		Vertex source = new Vertex(0, 0);
+		Vertex target = new Vertex(200, 0);
 		network.addVertex(source);
 		network.addVertex(target);
 		network.addEdge(source, target, edge);
@@ -58,13 +58,13 @@ public class RoadNetworkTest {
 		when(agent.getEdgePosition()).thenReturn(new EdgePosition(edge, 1));
 		when(edge.getLength()).thenReturn(2.);
 
-		assertEquals(new Point(100, 0), network.getCoordinates(agent));
+		assertEquals(new Vertex(100, 0), network.getCoordinates(agent));
 	}
 
 	@Test
 	public void testGetCoordinatesYAxis() throws NodeNotFoundException {
-		Point source = new Point(0, 0);
-		Point target = new Point(0, 200);
+		Vertex source = new Vertex(0, 0);
+		Vertex target = new Vertex(0, 200);
 		network.addVertex(source);
 		network.addVertex(target);
 		network.addEdge(source, target, edge);
@@ -72,6 +72,6 @@ public class RoadNetworkTest {
 		when(agent.getEdgePosition()).thenReturn(new EdgePosition(edge, 1));
 		when(edge.getLength()).thenReturn(2.);
 
-		assertEquals(new Point(0, 100), network.getCoordinates(agent));
+		assertEquals(new Vertex(0, 100), network.getCoordinates(agent));
 	}
 }

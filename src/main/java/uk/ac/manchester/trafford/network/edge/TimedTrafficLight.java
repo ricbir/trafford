@@ -6,6 +6,9 @@ import java.util.List;
 
 import com.google.common.collect.Iterables;
 
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ObservableValue;
 import uk.ac.manchester.trafford.Constants;
 import uk.ac.manchester.trafford.Model;
 import uk.ac.manchester.trafford.network.RoadNetwork;
@@ -25,9 +28,9 @@ public class TimedTrafficLight implements Model {
 
 	RoadNetwork network;
 
-	private List<TimedTrafficLightAccessController> controllers;
-	private Iterator<TimedTrafficLightAccessController> controllerIterator;
-	private TimedTrafficLightAccessController currentController;
+	private List<AccessController> controllers;
+	private Iterator<AccessController> controllerIterator;
+	private AccessController currentController;
 	private int timer = 0;
 
 	public TimedTrafficLight(int id, int greenSeconds, int yellowSeconds, int stages, RoadNetwork network) {
@@ -50,7 +53,7 @@ public class TimedTrafficLight implements Model {
 
 		controllers = new ArrayList<>(stages);
 		for (int i = 0; i < stages; i++) {
-			controllers.add(new TimedTrafficLightAccessController(State.TL_RED));
+			controllers.add(new AccessController(State.TL_RED));
 		}
 		this.controllerIterator = Iterables.cycle(controllers).iterator();
 		this.currentController = controllerIterator.next();
@@ -92,20 +95,20 @@ public class TimedTrafficLight implements Model {
 			return;
 		}
 
-		switch (currentController.state) {
+		switch (currentController.getState()) {
 		case TL_YELLOW:
-			currentController.state = State.TL_RED;
+			currentController.setState(State.TL_RED);
 			currentController = controllerIterator.next();
 		case TL_RED:
-			currentController.state = State.TL_GREEN;
+			currentController.setState(State.TL_GREEN);
 			timer = greenUpdates;
 			break;
 		case TL_GREEN:
-			currentController.state = State.TL_YELLOW;
+			currentController.setState(State.TL_YELLOW);
 			timer = yellowUpdates;
 			break;
 		default:
-			currentController.state = State.TL_RED;
+			currentController.setState(State.TL_RED);
 			break;
 		}
 	}
@@ -120,16 +123,25 @@ public class TimedTrafficLight implements Model {
 		this.yellowUpdates = (int) Math.round(seconds * Constants.UPDATES_PER_SECOND);
 	}
 
-	private class TimedTrafficLightAccessController implements EdgeAccessController {
-		State state;
+	public class AccessController implements EdgeAccessController {
+		ObjectProperty<State> observableState;
 
-		private TimedTrafficLightAccessController(State initialState) {
-			this.state = initialState;
+		private AccessController(State initialState) {
+			this.observableState = new SimpleObjectProperty<>(initialState);
+		}
+
+		private void setState(State state) {
+			observableState.set(state);
 		}
 
 		@Override
 		public State getState() {
-			return state;
+			return observableState.get();
+		}
+
+		@Override
+		public ObservableValue<State> getObservableState() {
+			return observableState;
 		}
 
 	}

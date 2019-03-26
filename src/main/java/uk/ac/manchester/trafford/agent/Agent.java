@@ -11,7 +11,7 @@ import uk.ac.manchester.trafford.Constants;
 import uk.ac.manchester.trafford.exceptions.AlreadyAtDestinationException;
 import uk.ac.manchester.trafford.exceptions.NodeNotFoundException;
 import uk.ac.manchester.trafford.exceptions.PathNotFoundException;
-import uk.ac.manchester.trafford.network.Point;
+import uk.ac.manchester.trafford.network.Vertex;
 import uk.ac.manchester.trafford.network.RoadNetwork;
 import uk.ac.manchester.trafford.network.edge.Edge;
 import uk.ac.manchester.trafford.network.edge.EdgePosition;
@@ -54,7 +54,7 @@ public class Agent {
 
 	private boolean shouldUpdatePath = true;
 
-	private GraphPath<Point, Edge> path;
+	private GraphPath<Vertex, Edge> path;
 	private Iterator<Edge> edgeIterator;
 
 	private int journeyTimeCounter;
@@ -329,7 +329,7 @@ public class Agent {
 
 	public String debugString() {
 		if (currentEdge != null) {
-			Point pos = network.getCoordinates(this);
+			Vertex pos = network.getCoordinates(this);
 			return String.format(
 					"name: %s, source: %s, target: %s, currEdge: %s, dist: %3.2f, x: %d, y: %d, speed: %.2f", name,
 					source, target, currentEdge, distanceOnCurrentEdge, pos.getX(), pos.getY(), speed);

@@ -1,14 +1,22 @@
 package uk.ac.manchester.trafford.network.edge;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Queue;
 import java.util.logging.Logger;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
+import org.jgrapht.io.Attribute;
+import org.jgrapht.io.AttributeType;
+import org.jgrapht.io.ComponentAttributeProvider;
+import org.jgrapht.io.ComponentNameProvider;
+import org.jgrapht.io.DefaultAttribute;
+import org.jgrapht.io.EdgeProvider;
 
 import com.google.common.collect.EvictingQueue;
 
 import uk.ac.manchester.trafford.agent.Agent;
-import uk.ac.manchester.trafford.network.Point;
+import uk.ac.manchester.trafford.network.Vertex;
 import uk.ac.manchester.trafford.network.edge.EdgeAccessController.State;
 
 @SuppressWarnings("serial")
@@ -18,13 +26,6 @@ public class Edge extends DefaultWeightedEdge {
 
 	public static final int JOURNEY_TIMES = 20;
 
-	/**
-	 * Unique ID for this edge
-	 */
-	protected int mId = 0;
-
-	private final double length;
-
 	protected double speedLimit;
 	protected EdgeAccessController accessController;
 	protected TimedTrafficLight mTrafficLight = null;
@@ -33,17 +34,11 @@ public class Edge extends DefaultWeightedEdge {
 
 	private Queue<Double> lastJourneyTimes = EvictingQueue.create(JOURNEY_TIMES);
 
-	public static EdgeBuilder build(Point from, Point to) {
+	public static EdgeBuilder build(Vertex from, Vertex to) {
 		return new EdgeBuilder(from, to);
 	}
 
-	Edge(int id, double length) {
-		mId = id;
-		this.length = length;
-	}
-
-	public int getId() {
-		return mId;
+	Edge() {
 	}
 
 	public void setLastAgent(Agent agent) {
@@ -69,12 +64,16 @@ public class Edge extends DefaultWeightedEdge {
 	 * @return
 	 */
 	public double getCongestionCoefficient() {
-		double optimalJourneyTime = length / speedLimit;
+		double optimalJourneyTime = getLength() / speedLimit;
 		return Math.atan((getAverageJourneyTime() - optimalJourneyTime) / optimalJourneyTime / 3) / Math.PI * 2;
 	}
 
 	public State getAccessState() {
 		return accessController.getState();
+	}
+
+	public EdgeAccessController getAccessController() {
+		return accessController;
 	}
 
 	/**
@@ -83,7 +82,7 @@ public class Edge extends DefaultWeightedEdge {
 	 * @return1
 	 */
 	public double getLength() {
-		return length;
+		return getSource().distance(getTarget());
 	}
 
 	/**
@@ -103,13 +102,42 @@ public class Edge extends DefaultWeightedEdge {
 		return lastAgent;
 	}
 
-	@Override
-	public String toString() {
-		return "{ source: " + getSource() + ", target: " + getTarget() + ", length: " + length + ", s/l: " + speedLimit
-				+ " }";
-	}
-
 	public TimedTrafficLight getTrafficLight() {
 		return mTrafficLight;
+	}
+
+	@Override
+	protected Vertex getSource() {
+		return (Vertex) super.getSource();
+	}
+
+	@Override
+	protected Vertex getTarget() {
+		return (Vertex) super.getTarget();
+	}
+
+	public static ComponentAttributeProvider<Edge> attributeProvider() {
+		return e -> {
+			Map<String, Attribute> attributes = new HashMap<>();
+			attributes.put("speedLimit", new DefaultAttribute<>(e.speedLimit, AttributeType.DOUBLE));
+			attributes.put("lanes", new DefaultAttribute<>(1, AttributeType.INT));
+			return attributes;
+		};
+	}
+
+	public static EdgeProvider<Vertex, Edge> provider() {
+		return (source, target, label, attributes) -> {
+			EdgeBuilder builder = Edge.build(source, target);
+			if (attributes.containsKey("speedLimit")) {
+				builder.speedLimit(Double.parseDouble(attributes.get("speedLimit").getValue()));
+			}
+			return builder.build();
+		};
+	}
+
+	public static ComponentNameProvider<Edge> idProvider() {
+		return e -> {
+			return e.getSource().getId() + "->" + e.getTarget().getId();
+		};
 	}
 }

@@ -14,7 +14,7 @@ public class Constants {
 	public static final int NANOSECONDS_PER_SECOND = 1_000_000_000;
 
 	/** Minimum space between agents, in meters */
-	public static final double MINIMUM_SPACING = 0.5;
+	public static final double MINIMUM_SPACING = 4.5;
 	/**
 	 * Time headway (i.e. the time it would take an agent to reach its leader)
 	 * between agents, in seconds

@@ -1,21 +1,8 @@
 package uk.ac.manchester.trafford;
 
-public interface Renderer<T extends Model> {
-	public void render();
+import javafx.scene.canvas.GraphicsContext;
 
-	public void setModel(T model);
+public interface Renderer<T> {
 
-	public T getModel();
-
-	public void setScalingFactor(double scalingFactor);
-
-	public double getScalingFactor();
-
-	public void setTranslateX(double translateX);
-
-	public double getTranslateX();
-
-	public void setTranslateY(double translateY);
-
-	public double getTranslateY();
+	public void render(GraphicsContext gc, T model);
 }
