@@ -35,8 +35,8 @@ dependencies {
     compile 'log4j:log4j:1.2.16'
 
 	// JGraphT
-    compile 'org.jgrapht:jgrapht-core:1.2.0'
-    compile 'org.jgrapht:jgrapht-io:1.2.0'
+    compile 'org.jgrapht:jgrapht-core:1.3.0'
+    compile 'org.jgrapht:jgrapht-io:1.3.0'
     
     // Google Java libraries
     compile 'com.google.guava:guava:27.0-jre'
