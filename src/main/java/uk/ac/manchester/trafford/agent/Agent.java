@@ -11,10 +11,9 @@ import uk.ac.manchester.trafford.Constants;
 import uk.ac.manchester.trafford.exceptions.AlreadyAtDestinationException;
 import uk.ac.manchester.trafford.exceptions.NodeNotFoundException;
 import uk.ac.manchester.trafford.exceptions.PathNotFoundException;
-import uk.ac.manchester.trafford.network.Point;
+import uk.ac.manchester.trafford.network.Vertex;
 import uk.ac.manchester.trafford.network.RoadNetwork;
 import uk.ac.manchester.trafford.network.edge.Edge;
-import uk.ac.manchester.trafford.network.edge.EdgeAccessController;
 import uk.ac.manchester.trafford.network.edge.EdgePosition;
 
 public class Agent {
@@ -27,6 +26,8 @@ public class Agent {
 
 	private EdgePosition source;
 	private EdgePosition target;
+
+	protected int mSize = 160;
 
 	// private List<Agent> watchlist = new ArrayList<>(5);
 	private Agent leader = null;
@@ -53,7 +54,7 @@ public class Agent {
 
 	private boolean shouldUpdatePath = true;
 
-	private GraphPath<Point, Edge> path;
+	private GraphPath<Vertex, Edge> path;
 	private Iterator<Edge> edgeIterator;
 
 	private int journeyTimeCounter;
@@ -221,19 +222,30 @@ public class Agent {
 
 		if (nextEdge != null) {
 			double distanceToNextEdge = currentEdge.getLength() - distanceOnCurrentEdge;
-			if (nextEdge.getAccessState() != EdgeAccessController.State.GREEN) {
-				if (nextEdge.getAccessState() == EdgeAccessController.State.RED
-						|| distanceToNextEdge > speed * 3 - 30) {
+
+			switch (currentEdge.getAccessState()) {
+			case TL_RED:
+				nextEdgeInteractionTerm = getIDMInteractionTerm(0, distanceToNextEdge);
+				break;
+			case TL_YELLOW:
+				if (distanceToNextEdge > speed * 3 - 30) {
 					nextEdgeInteractionTerm = getIDMInteractionTerm(0, distanceToNextEdge);
+					break;
 				}
-			} else {
+			case TL_GREEN:
+			case FREE:
 				if (speed > nextEdge.getSpeedLimit()) {
-					nextEdgeInteractionTerm = getIDMInteractionTerm(nextEdge.getSpeedLimit(), distanceToNextEdge);
+					// Abstract speed limit as another vehicle
+					nextEdgeInteractionTerm = getIDMInteractionTerm(nextEdge.getSpeedLimit(),
+							distanceToNextEdge + Constants.MINIMUM_SPACING);
 				}
+				break;
 			}
 		}
 
-		if (leaderInteractionTerm > nextEdgeInteractionTerm) {
+		if (leaderInteractionTerm > nextEdgeInteractionTerm)
+
+		{
 			return maxAcceleration * (1 - freeRoadTerm - leaderInteractionTerm) / Constants.UPDATES_PER_SECOND;
 		} else {
 			return maxAcceleration * (1 - freeRoadTerm - nextEdgeInteractionTerm) / Constants.UPDATES_PER_SECOND;
@@ -317,12 +329,21 @@ public class Agent {
 
 	public String debugString() {
 		if (currentEdge != null) {
-			Point pos = network.getCoordinates(this);
+			Vertex pos = network.getCoordinates(this);
 			return String.format(
 					"name: %s, source: %s, target: %s, currEdge: %s, dist: %3.2f, x: %d, y: %d, speed: %.2f", name,
 					source, target, currentEdge, distanceOnCurrentEdge, pos.getX(), pos.getY(), speed);
 		}
 		return String.format("name: %s, source: %s, target: %s, currEdge: %s, dist: %3.2f, x: N/A, y: N/A, speed: %.2f",
 				name, source, target, currentEdge, distanceOnCurrentEdge, speed);
+	}
+
+	/**
+	 * Return the size of the agent
+	 * 
+	 * @return
+	 */
+	public int getSize() {
+		return mSize;
 	}
 }

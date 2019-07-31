@@ -1,7 +1,7 @@
 package uk.ac.manchester.trafford;
 
 public class Constants {
-	public static final int UPDATES_PER_SECOND = 30;
+	public static final int UPDATES_PER_SECOND = 50;
 	public static final int RENDERS_PER_SECOND = 30;
 
 	public static final double SPATIAL_SENSITIVITY = 0.0005;
@@ -14,7 +14,7 @@ public class Constants {
 	public static final int NANOSECONDS_PER_SECOND = 1_000_000_000;
 
 	/** Minimum space between agents, in meters */
-	public static final double MINIMUM_SPACING = 0.5;
+	public static final double MINIMUM_SPACING = 4.5;
 	/**
 	 * Time headway (i.e. the time it would take an agent to reach its leader)
 	 * between agents, in seconds

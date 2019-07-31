@@ -1,9 +1,8 @@
 package uk.ac.manchester.trafford;
 
-import uk.ac.manchester.trafford.network.RoadNetwork;
+import javafx.scene.canvas.GraphicsContext;
 
-public interface Renderer {
-	public void render(double interpolation);
+public interface Renderer<T> {
 
-	public void setNetwork(RoadNetwork network);
+	public void render(GraphicsContext gc, T model);
 }

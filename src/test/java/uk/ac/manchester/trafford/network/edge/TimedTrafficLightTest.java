@@ -47,7 +47,7 @@ public class TimedTrafficLightTest {
 
 	@Test
 	public void testTimedTrafficLight() {
-		trafficLight = new TimedTrafficLight(GREEN_SECONDS, YELLOW_SECONDS, 2, network);
+		trafficLight = new TimedTrafficLight(0, GREEN_SECONDS, YELLOW_SECONDS, 2, network);
 
 		assertEquals(trafficLight.stages(), 2);
 		assertTrue(trafficLight.getController(0) instanceof EdgeAccessController);
@@ -61,12 +61,12 @@ public class TimedTrafficLightTest {
 
 		}
 
-		verify(network).subscribe(trafficLight);
+		verify(network).addTrafficLight(trafficLight);
 	}
 
 	@Test
 	public void testSequence() {
-		trafficLight = new TimedTrafficLight(GREEN_SECONDS, YELLOW_SECONDS, 3, network);
+		trafficLight = new TimedTrafficLight(0, GREEN_SECONDS, YELLOW_SECONDS, 3, network);
 
 		for (int i = 0; i < GREEN_SECONDS * Constants.UPDATES_PER_SECOND; i++) {
 			trafficLight.update();
@@ -124,15 +124,15 @@ public class TimedTrafficLightTest {
 	}
 
 	private void assertRed(EdgeAccessController controller) {
-		assertEquals(State.RED, controller.getState());
+		assertEquals(State.TL_RED, controller.getState());
 	}
 
 	private void assertGreen(EdgeAccessController controller) {
-		assertEquals(State.GREEN, controller.getState());
+		assertEquals(State.TL_GREEN, controller.getState());
 	}
 
 	private void assertYellow(EdgeAccessController controller) {
-		assertEquals(State.YELLOW, controller.getState());
+		assertEquals(State.TL_YELLOW, controller.getState());
 	}
 
 }

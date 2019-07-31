@@ -5,33 +5,71 @@
  * For more details take a look at the Java Libraries chapter in the Gradle
  * user guide available at https://docs.gradle.org/4.3/userguide/java_library_plugin.html
  */
+plugins {
+	id 'java'
 
-// Apply the java-library plugin to add support for Java Library
-apply plugin: 'java-library'
+	// Apply the jacoco plugin for code coverage
+	// id 'jacoco'
+	id 'application'
+	id "org.openjfx.javafxplugin" version "0.0.7"
+}
 
-// Apply the jacoco plugin for code coverage
-apply plugin: 'jacoco'
-
+apply plugin: "eclipse"
 
 // In this section you declare where to find the dependencies of your project
 repositories {
     // Use jcenter for resolving your dependencies.
     // You can declare any Maven/Ivy/file repository here.
     jcenter()
+    mavenCentral()
 }
 
 dependencies {
 
+    //compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.11.2'
+    //compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.11.2'
+    
+    //implementation 'org.apache.logging.log4j:log4j-api:1.2.13'
+    //implementation 'org.apache.logging.log4j:log4j-core:1.2.13'
+    
+    compile 'log4j:log4j:1.2.16'
+
 	// JGraphT
-    implementation 'org.jgrapht:jgrapht-core:1.2.0'
+    compile 'org.jgrapht:jgrapht-core:1.2.0'
+    compile 'org.jgrapht:jgrapht-io:1.2.0'
+    
     // Google Java libraries
-    implementation 'com.google.guava:guava:27.0-jre'
+    compile 'com.google.guava:guava:27.0-jre'
+    
+    compile 'log4j:log4j:1.2.16'
+    
+    compile 'eu.lestard:advanced-bindings:0.4.0'
 
     // Use JUnit test framework
     testImplementation 'junit:junit:4.12'
     // Use Mockito
     testImplementation 'org.mockito:mockito-core:2.23.0'
 }
+
+javafx {
+    modules = [ 'javafx.controls', 'javafx.fxml' ]
+}
+
+jar {
+    from {
+		configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+	}
+	manifest {
+		attributes(
+			'Main-Class': 'uk.ac.manchester.trafford.Main'
+	)
+  }
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+mainClassName = 'uk.ac.manchester.trafford.Main'
 
 
 

@@ -16,9 +16,10 @@ import uk.ac.manchester.trafford.exceptions.NodeNotFoundException;
 import uk.ac.manchester.trafford.exceptions.PathNotFoundException;
 import uk.ac.manchester.trafford.network.edge.Edge;
 import uk.ac.manchester.trafford.network.edge.EdgePosition;
+import uk.ac.manchester.trafford.network.edge.TimedTrafficLight;
 
 @SuppressWarnings("serial")
-public class RoadNetwork extends DefaultDirectedWeightedGraph<Point, Edge> {
+public class RoadNetwork extends DefaultDirectedWeightedGraph<Vertex, Edge> implements Model {
 	@SuppressWarnings("unused")
 	private static final Logger LOGGER = Logger.getLogger(RoadNetwork.class.getName());
 
@@ -27,7 +28,10 @@ public class RoadNetwork extends DefaultDirectedWeightedGraph<Point, Edge> {
 	private Set<Agent> agentAddSet = new HashSet<>();
 	double averageCongestion = 0;
 
-	private Set<Model> subscribers = new HashSet<>();
+	private double agentSpeed = 30;
+	private double agentSpeedVariability = 0.2;
+
+	private Set<TimedTrafficLight> trafficLights = new HashSet<>();
 
 	/**
 	 * Create a road network of given type and based on a graph.
@@ -40,20 +44,23 @@ public class RoadNetwork extends DefaultDirectedWeightedGraph<Point, Edge> {
 		}
 	}
 
-	public void addAgent(Agent agent) {
-		agentAddSet.add(agent);
-	}
-
-	public void subscribe(Model subscriber) {
-		synchronized (subscribers) {
-			subscribers.add(subscriber);
+	public void createAgent(EdgePosition source, EdgePosition target) {
+		try {
+			agentAddSet.add(
+					new Agent(this, source, target, agentSpeed + (Math.random() * agentSpeedVariability * agentSpeed)));
+		} catch (PathNotFoundException | NodeNotFoundException e) {
+			throw new IllegalArgumentException(e);
 		}
 	}
 
-	public void unsubscribe(Model subscriber) {
-		synchronized (subscribers) {
-			subscribers.remove(subscriber);
+	public void addTrafficLight(TimedTrafficLight trafficLight) {
+		synchronized (trafficLight) {
+			trafficLights.add(trafficLight);
 		}
+	}
+
+	public Set<TimedTrafficLight> getTrafficLights() {
+		return trafficLights;
 	}
 
 	/**
@@ -62,10 +69,11 @@ public class RoadNetwork extends DefaultDirectedWeightedGraph<Point, Edge> {
 	 * 
 	 * @return The snapshot.
 	 */
-	public Agent[] agentSetSnapshot() {
+	public synchronized Agent[] agentSetSnapshot() {
 		return agents.toArray(new Agent[agents.size()]);
 	}
 
+	@Override
 	public synchronized void update() {
 		agents.addAll(agentAddSet);
 		agentAddSet.clear();
@@ -93,30 +101,29 @@ public class RoadNetwork extends DefaultDirectedWeightedGraph<Point, Edge> {
 		}
 		averageCongestion /= totalLength;
 
-		synchronized (subscribers) {
-			for (Model subscriber : subscribers) {
+		synchronized (trafficLights) {
+			for (TimedTrafficLight subscriber : trafficLights) {
 				subscriber.update();
 			}
 		}
 	}
 
-	public Point getCoordinates(Agent agent) {
+	public Vertex getCoordinates(Agent agent) {
 		EdgePosition position = agent.getEdgePosition();
 		Edge edge = position.getEdge();
 		if (edge == null) {
 			return null;
 		}
 		double distance = position.getDistance();
-		Point source = getEdgeSource(edge);
-		Point target = getEdgeTarget(edge);
+		Vertex source = getEdgeSource(edge);
+		Vertex target = getEdgeTarget(edge);
 
-		return new Point(
-				(int) Math.round(distance / edge.getLength() * (target.getX() - source.getX()) + source.getX()),
-				(int) Math.round(distance / edge.getLength() * (target.getY() - source.getY()) + source.getY()));
+		return new Vertex(distance / edge.getLength() * (target.getX() - source.getX()) + source.getX(),
+				distance / edge.getLength() * (target.getY() - source.getY()) + source.getY());
 	}
 
-	public GraphPath<Point, Edge> getShortestPath(Point source, Point target) throws NodeNotFoundException {
-		ShortestPathAlgorithm<Point, Edge> shortestPath = new DijkstraShortestPath<Point, Edge>(this);
+	public GraphPath<Vertex, Edge> getShortestPath(Vertex source, Vertex target) throws NodeNotFoundException {
+		ShortestPathAlgorithm<Vertex, Edge> shortestPath = new DijkstraShortestPath<Vertex, Edge>(this);
 		try {
 			return shortestPath.getPath(source, target);
 		} catch (IllegalArgumentException e) {
@@ -126,5 +133,25 @@ public class RoadNetwork extends DefaultDirectedWeightedGraph<Point, Edge> {
 
 	public double getAverageCongestion() {
 		return averageCongestion;
+	}
+
+	public double getAgentSpeed() {
+		return agentSpeed;
+	}
+
+	public void setAgentSpeed(double agentSpeed) {
+		this.agentSpeed = agentSpeed;
+	}
+
+	public double getAgentSpeedVariability() {
+		return agentSpeedVariability;
+	}
+
+	public void setAgentSpeedVariability(double agentSpeedVariability) {
+		this.agentSpeedVariability = agentSpeedVariability;
+	}
+
+	public int getNumberOfAgents() {
+		return agents.size();
 	}
 }
