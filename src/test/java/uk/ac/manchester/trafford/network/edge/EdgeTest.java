@@ -6,7 +6,6 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -48,10 +47,21 @@ public class EdgeTest {
 
 	}
 
-	@Ignore
+	@Test
+	public void testDefaultValues() {
+		edge = new Edge(LENGTH);
+
+		assertEquals(Edge.DEFAULT_SPEED_LIMIT, edge.getSpeedLimit(), 0.0001);
+		assertEquals(LENGTH, edge.getLength(), 0.0001);
+		assertEquals(edge.getLength() / edge.getSpeedLimit(), edge.getAverageJourneyTime(), 0.0001);
+		assertEquals(FreeFlowAccessController.class, edge.getAccessController().getClass());
+		assertEquals(EdgeAccessController.State.FREE, edge.getAccessState());
+
+	}
+
 	@Test
 	public void testCongestionCoefficient() {
-		edge = new Edge();
+		edge = new Edge(LENGTH);
 		edge.speedLimit = SPEED_LIMIT;
 		double idealJourneyTime = LENGTH / SPEED_LIMIT;
 

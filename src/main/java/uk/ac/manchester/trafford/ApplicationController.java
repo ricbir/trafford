@@ -201,7 +201,7 @@ public class ApplicationController implements Initializable {
 			try {
 				speedLimit = Double.parseDouble(globalSpeedLimitField.getText());
 				for (Edge edge : network.edgeSet()) {
-					edge.setSpeedLimith(speedLimit);
+					edge.setSpeedLimit(speedLimit);
 					;
 				}
 			} catch (NumberFormatException nfe) {

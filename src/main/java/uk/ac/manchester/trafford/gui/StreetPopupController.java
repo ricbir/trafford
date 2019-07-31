@@ -67,7 +67,7 @@ public class StreetPopupController implements Initializable {
 			public void handle(ActionEvent e) {
 				_logger.debug(">>> ENTER: ok");
 				if (mStreet != null) {
-					mStreet.setSpeedLimith(speedLimitNumber.floatValue());
+					mStreet.setSpeedLimit(speedLimitNumber.floatValue());
 				}
 				// Close the popup window
 				((Stage) ((Node) e.getSource()).getScene().getWindow()).close();

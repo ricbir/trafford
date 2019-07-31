@@ -255,7 +255,6 @@ public class AgentTest {
 		when(edge2.getSpeedLimit()).thenReturn(AGENT_SPEED - 2);
 		while (agent.getEdgePosition().getDistance() < edge1.getLength() - 1) {
 			agent.move();
-			System.out.println(agent.getSpeed());
 		}
 		assertEquals(edge1, agent.getEdgePosition().getEdge());
 		assertEquals(AGENT_SPEED - 2, agent.getSpeed(), 0.5);

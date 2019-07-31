@@ -24,6 +24,8 @@ public class RoadNetworkFactory {
 
 	private static RoadNetworkFactory factory;
 
+	private static final double TURN_SPEED_LIMIT = 3;
+
 	public static RoadNetworkFactory getFactory() {
 		if (factory == null) {
 			factory = new RoadNetworkFactory();
@@ -49,7 +51,7 @@ public class RoadNetworkFactory {
 	public RoadNetwork importFromFile(File file) throws ImportException {
 		RoadNetwork network = new RoadNetwork();
 
-		GraphImporter<Vertex, Edge> exporter = new DOTImporter<>(Vertex.provider(), Edge.provider(), null, null);
+		GraphImporter<Vertex, Edge> exporter = new DOTImporter<>(Vertex.provider(), null, null, null);
 		exporter.importGraph(network, file);
 
 		return network;
@@ -72,7 +74,9 @@ public class RoadNetworkFactory {
 				double x = column * length;
 				double y = row * length;
 				for (XingDir dir : XingDir.values()) {
-					vertices.put(dir, new Vertex(column + ":" + row + ":" + dir.label, x + dir.x, y + dir.y));
+					Vertex v = new Vertex(column + ":" + row + ":" + dir.label, x + dir.x, y + dir.y);
+					network.addVertex(v);
+					vertices.put(dir, v);
 				}
 
 				intersections.put(column, row, vertices);
@@ -80,6 +84,7 @@ public class RoadNetworkFactory {
 		}
 
 		counter = 0;
+		Edge edge;
 
 		for (int column = 0; column < columns; column++) {
 			for (int row = 0; row < rows; row++) {
@@ -94,72 +99,83 @@ public class RoadNetworkFactory {
 				Vertex wIn = intersections.get(column, row).get(XingDir.W_IN);
 
 				if (row > 0) {
-					Edge.build(nOut, intersections.get(column, row - 1).get(XingDir.S_IN)).speedLimit(speedLimit)
-							.accessController(trafficLights[column][row - 1].getController(0))
-							.trafficLight(trafficLights[column][row - 1]).addToNetwork(network);
-					Edge.build(intersections.get(column, row - 1).get(XingDir.S_OUT), nIn).speedLimit(speedLimit)
-							.accessController(trafficLights[column][row].getController(0))
-							.trafficLight(trafficLights[column][row]).addToNetwork(network);
+
+					edge = new Edge(length);
+					edge.setSpeedLimit(speedLimit);
+					edge.setAccessController(trafficLights[column][row - 1].getController(0));
+					edge.setTrafficLight(trafficLights[column][row - 1]);
+					network.addEdge(nOut, intersections.get(column, row - 1).get(XingDir.S_IN), edge);
+
+					edge = new Edge(length);
+					edge.setSpeedLimit(speedLimit);
+					edge.setAccessController(trafficLights[column][row].getController(0));
+					edge.setTrafficLight(trafficLights[column][row]);
+					network.addEdge(intersections.get(column, row - 1).get(XingDir.S_OUT), nIn, edge);
 
 					if (row < rows - 1) {
-						Edge.build(nIn, sOut).speedLimit(speedLimit).addToNetwork(network);
+						addEdgeToNetwork(network, nIn, sOut, length, speedLimit);
 					}
 
 					if (column < columns - 1) {
-						Edge.build(nIn, eOut).speedLimit(3).addToNetwork(network);
+						addTurnEdgeToNetwork(network, nIn, eOut, length);
 					}
 
 					if (column > 0) {
-						Edge.build(nIn, wOut).speedLimit(3).addToNetwork(network);
+						addTurnEdgeToNetwork(network, nIn, wOut, length);
 					}
 				}
 
 				if (column > 0) {
-					Edge.build(wOut, intersections.get(column - 1, row).get(XingDir.E_IN)) //
-							.speedLimit(speedLimit).accessController(trafficLights[column - 1][row].getController(1))
-							.trafficLight(trafficLights[column - 1][row]).addToNetwork(network); //
-					Edge.build(intersections.get(column - 1, row).get(XingDir.E_OUT), wIn) //
-							.speedLimit(speedLimit).accessController(trafficLights[column][row].getController(1))
-							.trafficLight(trafficLights[column][row]).addToNetwork(network); //
+					edge = new Edge(length);
+					edge.setSpeedLimit(speedLimit);
+					edge.setAccessController(trafficLights[column - 1][row].getController(1));
+					edge.setTrafficLight(trafficLights[column - 1][row]);
+					network.addEdge(wOut, intersections.get(column - 1, row).get(XingDir.E_IN), edge);
+
+					edge = new Edge(length);
+					edge.setSpeedLimit(speedLimit);
+					edge.setAccessController(trafficLights[column][row].getController(1));
+					edge.setTrafficLight(trafficLights[column][row]);
+					network.addEdge(intersections.get(column - 1, row).get(XingDir.E_OUT), wIn, edge);
 
 					if (column < columns - 1) {
-						Edge.build(wIn, eOut).speedLimit(speedLimit).addToNetwork(network);
+						addEdgeToNetwork(network, wIn, eOut, length, speedLimit);
 					}
 
 					if (row < rows - 1) {
-						Edge.build(wIn, sOut).speedLimit(3).addToNetwork(network);
+						addTurnEdgeToNetwork(network, wIn, sOut, length);
 					}
 
 					if (row > 0) {
-						Edge.build(wIn, nOut).speedLimit(3).addToNetwork(network);
+						addTurnEdgeToNetwork(network, wIn, nOut, length);
 					}
 				}
 
 				if (column < columns - 1) {
 					if (row < rows - 1) {
-						Edge.build(eIn, sOut).speedLimit(3).addToNetwork(network);
+						addTurnEdgeToNetwork(network, eIn, sOut, length);
 					}
 
 					if (row > 0) {
-						Edge.build(eIn, nOut).speedLimit(3).addToNetwork(network);
+						addTurnEdgeToNetwork(network, eIn, nOut, length);
 					}
 
 					if (column > 0) {
-						Edge.build(eIn, wOut).speedLimit(speedLimit).addToNetwork(network);
+						addEdgeToNetwork(network, eIn, wOut, length, speedLimit);
 					}
 				}
 
 				if (row < rows - 1) {
 					if (column < columns - 1) {
-						Edge.build(sIn, eOut).speedLimit(3).addToNetwork(network);
+						addTurnEdgeToNetwork(network, sIn, eOut, length);
 					}
 
 					if (row > 0) {
-						Edge.build(sIn, nOut).speedLimit(speedLimit).addToNetwork(network);
+						addEdgeToNetwork(network, sIn, nOut, length, speedLimit);
 					}
 
 					if (column > 0) {
-						Edge.build(sIn, wOut).speedLimit(3).addToNetwork(network);
+						addTurnEdgeToNetwork(network, sIn, wOut, length);
 					}
 				}
 
@@ -169,4 +185,17 @@ public class RoadNetworkFactory {
 		return network;
 	}
 
+	private void addEdgeToNetwork(RoadNetwork network, Vertex in, Vertex out, double length, double speedLimit) {
+		Edge edge;
+		edge = new Edge(length);
+		edge.setSpeedLimit(speedLimit);
+		network.addEdge(in, out, edge);
+	}
+
+	private void addTurnEdgeToNetwork(RoadNetwork network, Vertex in, Vertex out, double length) {
+		Edge edge;
+		edge = new Edge(length);
+		edge.setSpeedLimit(TURN_SPEED_LIMIT);
+		network.addEdge(in, out, edge);
+	}
 }

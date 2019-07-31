@@ -2,12 +2,15 @@ package uk.ac.manchester.trafford.network;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.logging.Logger;
+import java.util.function.Function;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.interfaces.ShortestPathAlgorithm;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
-import org.jgrapht.graph.DefaultDirectedWeightedGraph;
+import org.jgrapht.graph.AsWeightedGraph;
+import org.jgrapht.graph.DefaultDirectedGraph;
 
 import uk.ac.manchester.trafford.Model;
 import uk.ac.manchester.trafford.agent.Agent;
@@ -19,9 +22,9 @@ import uk.ac.manchester.trafford.network.edge.EdgePosition;
 import uk.ac.manchester.trafford.network.edge.TimedTrafficLight;
 
 @SuppressWarnings("serial")
-public class RoadNetwork extends DefaultDirectedWeightedGraph<Vertex, Edge> implements Model {
+public class RoadNetwork extends DefaultDirectedGraph<Vertex, Edge> implements Model {
 	@SuppressWarnings("unused")
-	private static final Logger LOGGER = Logger.getLogger(RoadNetwork.class.getName());
+	private static final Logger LOGGER = LogManager.getLogger(RoadNetwork.class);
 
 	private Set<Agent> agents = new HashSet<>();
 	private Set<Agent> agentRemoveSet = new HashSet<>();
@@ -39,17 +42,16 @@ public class RoadNetwork extends DefaultDirectedWeightedGraph<Vertex, Edge> impl
 	 */
 	RoadNetwork() {
 		super(Edge.class);
-		for (Edge edge : edgeSet()) {
-			setEdgeWeight(edge, edge.getLength() / edge.getSpeedLimit());
-		}
 	}
 
 	public void createAgent(EdgePosition source, EdgePosition target) {
 		try {
-			agentAddSet.add(
-					new Agent(this, source, target, agentSpeed + (Math.random() * agentSpeedVariability * agentSpeed)));
+			Agent agent = new Agent(this, source, target,
+					agentSpeed + (Math.random() * agentSpeedVariability * agentSpeed));
+			agentAddSet.add(agent);
 		} catch (PathNotFoundException | NodeNotFoundException e) {
-			throw new IllegalArgumentException(e);
+			LOGGER.warn("Could not create agent", e);
+			;
 		}
 	}
 
@@ -101,6 +103,10 @@ public class RoadNetwork extends DefaultDirectedWeightedGraph<Vertex, Edge> impl
 		}
 		averageCongestion /= totalLength;
 
+		if (averageCongestion > 1. || averageCongestion < 0.) {
+			LOGGER.warn("Meaningless congestion coefficient value: " + averageCongestion);
+		}
+
 		synchronized (trafficLights) {
 			for (TimedTrafficLight subscriber : trafficLights) {
 				subscriber.update();
@@ -123,12 +129,32 @@ public class RoadNetwork extends DefaultDirectedWeightedGraph<Vertex, Edge> impl
 	}
 
 	public GraphPath<Vertex, Edge> getShortestPath(Vertex source, Vertex target) throws NodeNotFoundException {
-		ShortestPathAlgorithm<Vertex, Edge> shortestPath = new DijkstraShortestPath<Vertex, Edge>(this);
+		ShortestPathAlgorithm<Vertex, Edge> shortestPath = new DijkstraShortestPath<Vertex, Edge>(getWeightedNetwork());
 		try {
 			return shortestPath.getPath(source, target);
 		} catch (IllegalArgumentException e) {
 			throw new NodeNotFoundException(e);
 		}
+	}
+
+	/**
+	 * Get a view of the network with weights
+	 * 
+	 * @return
+	 */
+	private AsWeightedGraph<Vertex, Edge> getWeightedNetwork() {
+		AsWeightedGraph<Vertex, Edge> weightedNetwork = new AsWeightedGraph<Vertex, Edge>(this,
+				new Function<Edge, Double>() {
+
+					@Override
+					public Double apply(Edge edge) {
+
+						return edge.getLength() / edge.getSpeedLimit() + edge.getAverageJourneyTime();
+					}
+
+				}, false, false);
+
+		return weightedNetwork;
 	}
 
 	public double getAverageCongestion() {
