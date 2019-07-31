@@ -29,7 +29,6 @@ import uk.ac.manchester.trafford.network.RoadNetwork;
 import uk.ac.manchester.trafford.network.Vertex;
 import uk.ac.manchester.trafford.network.edge.Edge;
 import uk.ac.manchester.trafford.network.edge.EdgeAccessController;
-import uk.ac.manchester.trafford.network.edge.EdgePosition;
 
 public class AgentTest {
 	@SuppressWarnings("unused")
@@ -80,16 +79,16 @@ public class AgentTest {
 		when(network.getEdgeTarget(edge1)).thenReturn(pathSource);
 		when(network.getEdgeSource(edge3)).thenReturn(pathTarget);
 
-		agent = new Agent(network, new EdgePosition(edge1, 0), new EdgePosition(edge3, 100), 0);
+		agent = new Agent(network, new Position(edge1, 0), new Position(edge3, 100), 0);
 
 		verify(network).getShortestPath(pathSource, pathTarget);
-		assertNull(agent.getEdgePosition().getEdge());
+		assertNull(agent.getPosition().getEdge());
 	}
 
 	@Test
 	public void testGetDistanceSameEdge() throws Exception {
-		agent = new Agent(network, new EdgePosition(edge1, 0), new EdgePosition(edge3, 10), AGENT_SPEED);
-		leader = new Agent(network, new EdgePosition(edge1, 10), new EdgePosition(edge3, 10), AGENT_SPEED);
+		agent = new Agent(network, new Position(edge1, 0), new Position(edge3, 10), AGENT_SPEED);
+		leader = new Agent(network, new Position(edge1, 10), new Position(edge3, 10), AGENT_SPEED);
 
 		leader.move();
 		agent.move();
@@ -99,8 +98,8 @@ public class AgentTest {
 
 	@Test
 	public void testGetDistanceNextEdge() throws Exception {
-		agent = new Agent(network, new EdgePosition(edge1, 0), new EdgePosition(edge3, 10), AGENT_SPEED);
-		leader = new Agent(network, new EdgePosition(edge2, 10), new EdgePosition(edge3, 10), AGENT_SPEED);
+		agent = new Agent(network, new Position(edge1, 0), new Position(edge3, 10), AGENT_SPEED);
+		leader = new Agent(network, new Position(edge2, 10), new Position(edge3, 10), AGENT_SPEED);
 		when(edge1.getLength()).thenReturn(100.);
 
 		leader.move();
@@ -111,8 +110,8 @@ public class AgentTest {
 
 	@Test
 	public void testGetDistanceBeyondNextEdge() throws Exception {
-		agent = new Agent(network, new EdgePosition(edge1, 0), new EdgePosition(edge3, 10), AGENT_SPEED);
-		leader = new Agent(network, new EdgePosition(edge3, 10), new EdgePosition(edge3, 20), AGENT_SPEED);
+		agent = new Agent(network, new Position(edge1, 0), new Position(edge3, 10), AGENT_SPEED);
+		leader = new Agent(network, new Position(edge3, 10), new Position(edge3, 20), AGENT_SPEED);
 		when(edge1.getLength()).thenReturn(100.);
 
 		leader.move();
@@ -123,8 +122,8 @@ public class AgentTest {
 
 	@Test
 	public void testJoinFlowBehind() throws Exception {
-		agent = new Agent(network, new EdgePosition(edge1, 20), new EdgePosition(edge3, 10), AGENT_SPEED);
-		leader = new Agent(network, new EdgePosition(edge1, 30), new EdgePosition(edge3, 10), AGENT_SPEED);
+		agent = new Agent(network, new Position(edge1, 20), new Position(edge3, 10), AGENT_SPEED);
+		leader = new Agent(network, new Position(edge1, 30), new Position(edge3, 10), AGENT_SPEED);
 
 		leader.move();
 		when(edge1.getLastAgent()).thenReturn(leader);
@@ -141,8 +140,8 @@ public class AgentTest {
 
 	@Test
 	public void testJoinFlowAhead() throws Exception {
-		follower = new Agent(network, new EdgePosition(edge1, 10), new EdgePosition(edge3, 10), AGENT_SPEED);
-		agent = new Agent(network, new EdgePosition(edge1, 20), new EdgePosition(edge3, 10), AGENT_SPEED);
+		follower = new Agent(network, new Position(edge1, 10), new Position(edge3, 10), AGENT_SPEED);
+		agent = new Agent(network, new Position(edge1, 20), new Position(edge3, 10), AGENT_SPEED);
 
 		follower.move();
 		when(edge1.getLastAgent()).thenReturn(follower);
@@ -159,9 +158,9 @@ public class AgentTest {
 
 	@Test
 	public void testJoinFlowMiddle() throws Exception {
-		follower = new Agent(network, new EdgePosition(edge1, 10), new EdgePosition(edge3, 10), AGENT_SPEED);
-		agent = new Agent(network, new EdgePosition(edge1, 20), new EdgePosition(edge3, 10), AGENT_SPEED);
-		leader = new Agent(network, new EdgePosition(edge1, 30), new EdgePosition(edge3, 10), AGENT_SPEED);
+		follower = new Agent(network, new Position(edge1, 10), new Position(edge3, 10), AGENT_SPEED);
+		agent = new Agent(network, new Position(edge1, 20), new Position(edge3, 10), AGENT_SPEED);
+		leader = new Agent(network, new Position(edge1, 30), new Position(edge3, 10), AGENT_SPEED);
 
 		follower.move();
 		when(edge1.getLastAgent()).thenReturn(follower);
@@ -182,28 +181,28 @@ public class AgentTest {
 
 	@Test
 	public void testMoveNotFollowing() throws Exception {
-		agent = new Agent(network, new EdgePosition(edge1, 0), new EdgePosition(edge3, 10), AGENT_SPEED);
+		agent = new Agent(network, new Position(edge1, 0), new Position(edge3, 10), AGENT_SPEED);
 
 		agent.move();
-		assertEquals(new EdgePosition(edge1, 0), agent.getEdgePosition());
+		assertEquals(new Position(edge1, 0), agent.getPosition());
 
 		agent.move();
 		assertEquals(
-				new EdgePosition(edge1,
+				new Position(edge1,
 						Constants.AGENT_ACCELERATION / Constants.UPDATES_PER_SECOND / Constants.UPDATES_PER_SECOND),
-				agent.getEdgePosition());
+				agent.getPosition());
 	}
 
 	@Ignore
 	@Test
 	public void testMoveToNextEdge() throws Exception {
-		agent = new Agent(network, new EdgePosition(edge1, 0), new EdgePosition(edge3, 10), AGENT_SPEED);
-		leader = new Agent(network, new EdgePosition(edge1, 0), new EdgePosition(edge3, 10), AGENT_SPEED);
+		agent = new Agent(network, new Position(edge1, 0), new Position(edge3, 10), AGENT_SPEED);
+		leader = new Agent(network, new Position(edge1, 0), new Position(edge3, 10), AGENT_SPEED);
 		leader.move();
 		agent.move();
 
 		int timeout = 3000;
-		while (leader.getEdgePosition().getEdge() == edge1) {
+		while (leader.getPosition().getEdge() == edge1) {
 			leader.move();
 			if (timeout-- == 0) {
 				fail("Operation timed out");
@@ -222,24 +221,24 @@ public class AgentTest {
 			leader.move();
 			agent.move();
 			assertTrue(
-					"follower position: " + agent.getEdgePosition().getDistance() + ", leader position: "
-							+ leader.getEdgePosition().getDistance(),
-					agent.getEdgePosition().getDistance() <= leader.getEdgePosition().getDistance());
+					"follower position: " + agent.getPosition().getDistance() + ", leader position: "
+							+ leader.getPosition().getDistance(),
+					agent.getPosition().getDistance() <= leader.getPosition().getDistance());
 		}
 	}
 
 	@Ignore
 	@Test
 	public void testKeepMinimumDistance() throws Exception {
-		agent = new Agent(network, new EdgePosition(edge1, 80), new EdgePosition(edge3, 100), AGENT_SPEED);
-		leader = new Agent(network, new EdgePosition(edge1, 80), new EdgePosition(edge3, 100), AGENT_SPEED);
+		agent = new Agent(network, new Position(edge1, 80), new Position(edge3, 100), AGENT_SPEED);
+		leader = new Agent(network, new Position(edge1, 80), new Position(edge3, 100), AGENT_SPEED);
 		// start.getDistance() + 10), destination, 0);
 		// agent.setLeader(leader);
 
 		for (int i = 0; i < Constants.UPDATES_PER_SECOND * 10; i++) {
 			agent.move();
-			double agentDistance = agent.getEdgePosition().getDistance();
-			double leaderDistance = leader.getEdgePosition().getDistance();
+			double agentDistance = agent.getPosition().getDistance();
+			double leaderDistance = leader.getPosition().getDistance();
 			double distanceBetweenAgents = leaderDistance - agentDistance;
 			assertTrue(
 					"Follower position: " + agentDistance + ", leader position: " + leaderDistance + ", distance: "
@@ -250,63 +249,63 @@ public class AgentTest {
 
 	@Test
 	public void testSlowDownForSpeedLimit() throws Exception {
-		agent = new Agent(network, new EdgePosition(edge1, 0), new EdgePosition(edge3, 100), AGENT_SPEED);
+		agent = new Agent(network, new Position(edge1, 0), new Position(edge3, 100), AGENT_SPEED);
 
 		when(edge2.getSpeedLimit()).thenReturn(AGENT_SPEED - 2);
-		while (agent.getEdgePosition().getDistance() < edge1.getLength() - 1) {
+		while (agent.getPosition().getDistance() < edge1.getLength() - 1) {
 			agent.move();
 		}
-		assertEquals(edge1, agent.getEdgePosition().getEdge());
+		assertEquals(edge1, agent.getPosition().getEdge());
 		assertEquals(AGENT_SPEED - 2, agent.getSpeed(), 0.5);
 	}
 
 	@Ignore
 	@Test
 	public void testStopAtRedLight() throws Exception {
-		agent = new Agent(network, new EdgePosition(edge1, 90), new EdgePosition(edge3, 100), AGENT_SPEED);
+		agent = new Agent(network, new Position(edge1, 90), new Position(edge3, 100), AGENT_SPEED);
 
 		when(edge1.getAccessState()).thenReturn(EdgeAccessController.State.TL_RED);
 		for (int i = 0; i < Constants.UPDATES_PER_SECOND * 10; i++) {
 			agent.move();
 		}
-		assertEquals(edge1, agent.getEdgePosition().getEdge());
-		assertEquals(edge1.getLength(), agent.getEdgePosition().getDistance(), 1);
+		assertEquals(edge1, agent.getPosition().getEdge());
+		assertEquals(edge1.getLength(), agent.getPosition().getDistance(), 1);
 	}
 
 	@Ignore
 	@Test
 	public void testStopAtYellowLight() throws Exception {
-		agent = new Agent(network, new EdgePosition(edge1, 80), new EdgePosition(edge3, 100), AGENT_SPEED);
+		agent = new Agent(network, new Position(edge1, 80), new Position(edge3, 100), AGENT_SPEED);
 
 		when(edge1.getAccessState()).thenReturn(EdgeAccessController.State.TL_YELLOW);
 		for (int i = 0; i < Constants.UPDATES_PER_SECOND * 10; i++) {
 			agent.move();
 		}
-		assertEquals(edge1, agent.getEdgePosition().getEdge());
-		assertEquals(edge1.getLength(), agent.getEdgePosition().getDistance(), 1);
+		assertEquals(edge1, agent.getPosition().getEdge());
+		assertEquals(edge1.getLength(), agent.getPosition().getDistance(), 1);
 	}
 
 	@Test
 	public void testRunYellowLight() throws Exception {
-		agent = new Agent(network, new EdgePosition(edge1, 80), new EdgePosition(edge3, 100), AGENT_SPEED);
+		agent = new Agent(network, new Position(edge1, 80), new Position(edge3, 100), AGENT_SPEED);
 
 		when(edge1.getAccessState()).thenReturn(EdgeAccessController.State.TL_GREEN);
 		for (int i = 0; i < Constants.UPDATES_PER_SECOND * 10; i++) {
 			agent.move();
-			if (agent.getEdgePosition().getDistance() > 99)
+			if (agent.getPosition().getDistance() > 99)
 				when(edge2.getAccessState()).thenReturn(EdgeAccessController.State.TL_YELLOW);
 		}
-		assertEquals(edge2, agent.getEdgePosition().getEdge());
+		assertEquals(edge2, agent.getPosition().getEdge());
 	}
 
 	@Test
 	public void testRunGreenLight() throws Exception {
-		agent = new Agent(network, new EdgePosition(edge1, 80), new EdgePosition(edge3, 100), AGENT_SPEED);
+		agent = new Agent(network, new Position(edge1, 80), new Position(edge3, 100), AGENT_SPEED);
 
 		when(edge1.getAccessState()).thenReturn(EdgeAccessController.State.TL_GREEN);
 		for (int i = 0; i < Constants.UPDATES_PER_SECOND * 5; i++) {
 			agent.move();
 		}
-		assertEquals(edge2, agent.getEdgePosition().getEdge());
+		assertEquals(edge2, agent.getPosition().getEdge());
 	}
 }

@@ -11,9 +11,9 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import uk.ac.manchester.trafford.agent.Agent;
+import uk.ac.manchester.trafford.agent.Position;
 import uk.ac.manchester.trafford.exceptions.NodeNotFoundException;
 import uk.ac.manchester.trafford.network.edge.Edge;
-import uk.ac.manchester.trafford.network.edge.EdgePosition;
 
 public class RoadNetworkTest {
 	private RoadNetwork network;
@@ -43,7 +43,7 @@ public class RoadNetworkTest {
 		network.addVertex(target);
 		network.addEdge(source, target, edge);
 
-		when(agent.getEdgePosition()).thenReturn(new EdgePosition(edge, Math.sqrt(2)));
+		when(agent.getPosition()).thenReturn(new Position(edge, Math.sqrt(2)));
 		when(edge.getLength()).thenReturn(source.distance(target));
 
 		assertEquals(new Vertex(100, 100), network.getCoordinates(agent));
@@ -58,7 +58,7 @@ public class RoadNetworkTest {
 		network.addVertex(target);
 		network.addEdge(source, target, edge);
 
-		when(agent.getEdgePosition()).thenReturn(new EdgePosition(edge, 1));
+		when(agent.getPosition()).thenReturn(new Position(edge, 1));
 		when(edge.getLength()).thenReturn(2.);
 
 		assertEquals(new Vertex(100, 0), network.getCoordinates(agent));
@@ -73,7 +73,7 @@ public class RoadNetworkTest {
 		network.addVertex(target);
 		network.addEdge(source, target, edge);
 
-		when(agent.getEdgePosition()).thenReturn(new EdgePosition(edge, 1));
+		when(agent.getPosition()).thenReturn(new Position(edge, 1));
 		when(edge.getLength()).thenReturn(2.);
 
 		assertEquals(new Vertex(0, 100), network.getCoordinates(agent));

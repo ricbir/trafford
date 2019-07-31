@@ -13,11 +13,11 @@ import org.jgrapht.graph.DefaultDirectedGraph;
 
 import uk.ac.manchester.trafford.Model;
 import uk.ac.manchester.trafford.agent.Agent;
+import uk.ac.manchester.trafford.agent.Position;
 import uk.ac.manchester.trafford.exceptions.AlreadyAtDestinationException;
 import uk.ac.manchester.trafford.exceptions.NodeNotFoundException;
 import uk.ac.manchester.trafford.exceptions.PathNotFoundException;
 import uk.ac.manchester.trafford.network.edge.Edge;
-import uk.ac.manchester.trafford.network.edge.EdgePosition;
 import uk.ac.manchester.trafford.network.edge.TimedTrafficLight;
 
 @SuppressWarnings("serial")
@@ -43,15 +43,16 @@ public class RoadNetwork extends DefaultDirectedGraph<Vertex, Edge> implements M
 		super(Edge.class);
 	}
 
-	public void createAgent(EdgePosition source, EdgePosition target) {
+	public Agent createAgent(Position source, Position target) {
 		try {
 			Agent agent = new Agent(this, source, target,
 					agentSpeed + (Math.random() * agentSpeedVariability * agentSpeed));
 			agentAddSet.add(agent);
+			return agent;
 		} catch (PathNotFoundException | NodeNotFoundException e) {
 			LOGGER.warn("Could not create agent", e);
-			;
 		}
+		return null;
 	}
 
 	public void addTrafficLight(TimedTrafficLight trafficLight) {
@@ -114,7 +115,7 @@ public class RoadNetwork extends DefaultDirectedGraph<Vertex, Edge> implements M
 	}
 
 	public Vertex getCoordinates(Agent agent) {
-		EdgePosition position = agent.getEdgePosition();
+		Position position = agent.getPosition();
 		Edge edge = position.getEdge();
 		if (edge == null) {
 			return null;

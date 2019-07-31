@@ -2,7 +2,6 @@ package uk.ac.manchester.trafford;
 
 import java.io.File;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.ResourceBundle;
 
 import org.apache.log4j.LogManager;
@@ -48,12 +47,13 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.converter.NumberStringConverter;
 import uk.ac.manchester.trafford.agent.Agent;
+import uk.ac.manchester.trafford.agent.Agent.State;
+import uk.ac.manchester.trafford.agent.Position;
 import uk.ac.manchester.trafford.gui.TrafficLightPopupController;
 import uk.ac.manchester.trafford.network.RoadNetwork;
 import uk.ac.manchester.trafford.network.RoadNetworkFactory;
 import uk.ac.manchester.trafford.network.Vertex;
 import uk.ac.manchester.trafford.network.edge.Edge;
-import uk.ac.manchester.trafford.network.edge.EdgePosition;
 import uk.ac.manchester.trafford.network.edge.TimedTrafficLight;
 
 public class ApplicationController implements Initializable {
@@ -352,57 +352,55 @@ public class ApplicationController implements Initializable {
 			}
 		};
 
-		Runnable updateModelTask = new Runnable() {
+		new AnimationTimer() {
+
 			private Edge[] edges = new Edge[1];
 			private long lastUpdateTime = System.nanoTime();
 
 			@Override
-			public void run() {
-				LOGGER.debug(">>> ENTER run");
-				while (!Thread.interrupted()) {
-					long now = System.nanoTime();
-					long timeBetweenUpdates;
-
-					while (now - lastUpdateTime > (timeBetweenUpdates = (long) (Constants.NANOSECONDS_PER_SECOND
-							/ Constants.UPDATES_PER_SECOND / speedSlider.getValue()))) {
-						if (runButton.isSelected()) {
-							for (int i = 0; (i < Math.min(agentNumber.get() - network.getNumberOfAgents(),
-									agentSpawnRate.get())); i++) {
-								edges = network.edgeSet().toArray(edges);
-								int startEdgeIndex = (int) (Math.random() * edges.length);
-								int targetEdgeIndex;
-								do {
-									targetEdgeIndex = (int) (Math.random() * edges.length);
-								} while (targetEdgeIndex == startEdgeIndex);
-
-								network.createAgent(
-										new EdgePosition(edges[startEdgeIndex],
-												edges[startEdgeIndex].getLength() * Math.random()),
-										new EdgePosition(edges[targetEdgeIndex],
-												edges[targetEdgeIndex].getLength() * Math.random()));
-							}
-
-							network.update();
-						}
-						lastUpdateTime += timeBetweenUpdates;
-					}
-					try {
-						Thread.sleep(1);
-					} catch (InterruptedException e) {
-						break;
-					}
-				}
-				LOGGER.debug(">>> EXIT run");
-			}
-		};
-
-		Trafford.EXECUTOR_SERVICE.execute(updateModelTask);
-
-		new AnimationTimer() {
-
-			@Override
 			public void handle(long now) {
-				renderer.render(agentCanvas.getGraphicsContext2D(), Arrays.asList(network.agentSetSnapshot()));
+				long timeBetweenUpdates;
+
+				while (now - lastUpdateTime > (timeBetweenUpdates = (long) (Constants.NANOSECONDS_PER_SECOND
+						/ Constants.UPDATES_PER_SECOND / speedSlider.getValue()))) {
+					if (runButton.isSelected()) {
+						for (int i = 0; (i < Math.min(agentNumber.get() - network.getNumberOfAgents(),
+								agentSpawnRate.get())); i++) {
+							edges = network.edgeSet().toArray(edges);
+							int startEdgeIndex = (int) (Math.random() * edges.length);
+							int targetEdgeIndex;
+							do {
+								targetEdgeIndex = (int) (Math.random() * edges.length);
+							} while (targetEdgeIndex == startEdgeIndex);
+
+							Agent agent = network.createAgent(
+									new Position(edges[startEdgeIndex],
+											edges[startEdgeIndex].getLength() * Math.random()),
+									new Position(edges[targetEdgeIndex],
+											edges[targetEdgeIndex].getLength() * Math.random()));
+
+							if (agent != null) {
+
+								Circle agentSprite = new Circle(1, Color.DODGERBLUE);
+								agentSprite.centerXProperty().bind(agent.getPosition().getXProperty());
+								agentSprite.centerYProperty().bind(agent.getPosition().getYProperty());
+								simulationView.getChildren().add(agentSprite);
+
+								// Remove agent sprite if agent arrives at destination
+								agent.getStateProperty().addListener((o, oldState, newState) -> {
+									if (newState == State.AT_DESTINATION) {
+										agentSprite.centerXProperty().unbind();
+										agentSprite.centerYProperty().unbind();
+										simulationView.getChildren().remove(agentSprite);
+									}
+								});
+							}
+						}
+
+						network.update();
+					}
+					lastUpdateTime += timeBetweenUpdates;
+				}
 				congestionCoefficient.setText(String.format("%.4f", network.getAverageCongestion()));
 			}
 

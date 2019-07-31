@@ -142,4 +142,12 @@ public class Edge extends DefaultWeightedEdge {
 			return e.getSource().getId() + "->" + e.getTarget().getId();
 		};
 	}
+
+	public double getX(double distance) {
+		return distance * (getTarget().getX() - getSource().getX()) / length + getSource().getX();
+	}
+
+	public double getY(double distance) {
+		return distance * (getTarget().getY() - getSource().getY()) / length + getSource().getY();
+	}
 }

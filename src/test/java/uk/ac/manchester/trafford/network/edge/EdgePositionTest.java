@@ -11,10 +11,12 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import uk.ac.manchester.trafford.agent.Position;
+
 public class EdgePositionTest {
 
-	private EdgePosition position1;
-	private EdgePosition position2;
+	private Position position1;
+	private Position position2;
 
 	@Mock
 	private Edge edge1;
@@ -41,26 +43,26 @@ public class EdgePositionTest {
 
 	@Test
 	public void testEquals() {
-		position1 = new EdgePosition(edge1, 10);
-		position2 = new EdgePosition(edge1, 10);
+		position1 = new Position(edge1, 10);
+		position2 = new Position(edge1, 10);
 
 		assertTrue(position1.equals(position2));
 		assertTrue(position2.equals(position1));
 
-		position1 = new EdgePosition(edge1, 10);
-		position2 = new EdgePosition(edge2, 10);
+		position1 = new Position(edge1, 10);
+		position2 = new Position(edge2, 10);
 
 		assertFalse(position1.equals(position2));
 		assertFalse(position2.equals(position1));
 
-		position1 = new EdgePosition(edge1, 10);
-		position2 = new EdgePosition(edge1, 20);
+		position1 = new Position(edge1, 10);
+		position2 = new Position(edge1, 20);
 
 		assertFalse(position1.equals(position2));
 		assertFalse(position2.equals(position1));
 
-		position1 = new EdgePosition(edge1, 10);
-		position2 = new EdgePosition(edge2, 20);
+		position1 = new Position(edge1, 10);
+		position2 = new Position(edge2, 20);
 
 		assertFalse(position1.equals(position2));
 		assertFalse(position2.equals(position1));
