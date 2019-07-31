@@ -113,15 +113,15 @@ public class RoadNetworkFactory {
 					network.addEdge(intersections.get(column, row - 1).get(XingDir.S_OUT), nIn, edge);
 
 					if (row < rows - 1) {
-						addEdgeToNetwork(network, nIn, sOut, length, speedLimit);
+						addEdgeToNetwork(network, nIn, sOut, speedLimit);
 					}
 
 					if (column < columns - 1) {
-						addTurnEdgeToNetwork(network, nIn, eOut, length);
+						addTurnEdgeToNetwork(network, nIn, eOut);
 					}
 
 					if (column > 0) {
-						addTurnEdgeToNetwork(network, nIn, wOut, length);
+						addTurnEdgeToNetwork(network, nIn, wOut);
 					}
 				}
 
@@ -139,43 +139,43 @@ public class RoadNetworkFactory {
 					network.addEdge(intersections.get(column - 1, row).get(XingDir.E_OUT), wIn, edge);
 
 					if (column < columns - 1) {
-						addEdgeToNetwork(network, wIn, eOut, length, speedLimit);
+						addEdgeToNetwork(network, wIn, eOut, speedLimit);
 					}
 
 					if (row < rows - 1) {
-						addTurnEdgeToNetwork(network, wIn, sOut, length);
+						addTurnEdgeToNetwork(network, wIn, sOut);
 					}
 
 					if (row > 0) {
-						addTurnEdgeToNetwork(network, wIn, nOut, length);
+						addTurnEdgeToNetwork(network, wIn, nOut);
 					}
 				}
 
 				if (column < columns - 1) {
 					if (row < rows - 1) {
-						addTurnEdgeToNetwork(network, eIn, sOut, length);
+						addTurnEdgeToNetwork(network, eIn, sOut);
 					}
 
 					if (row > 0) {
-						addTurnEdgeToNetwork(network, eIn, nOut, length);
+						addTurnEdgeToNetwork(network, eIn, nOut);
 					}
 
 					if (column > 0) {
-						addEdgeToNetwork(network, eIn, wOut, length, speedLimit);
+						addEdgeToNetwork(network, eIn, wOut, speedLimit);
 					}
 				}
 
 				if (row < rows - 1) {
 					if (column < columns - 1) {
-						addTurnEdgeToNetwork(network, sIn, eOut, length);
+						addTurnEdgeToNetwork(network, sIn, eOut);
 					}
 
 					if (row > 0) {
-						addEdgeToNetwork(network, sIn, nOut, length, speedLimit);
+						addEdgeToNetwork(network, sIn, nOut, speedLimit);
 					}
 
 					if (column > 0) {
-						addTurnEdgeToNetwork(network, sIn, wOut, length);
+						addTurnEdgeToNetwork(network, sIn, wOut);
 					}
 				}
 
@@ -185,17 +185,14 @@ public class RoadNetworkFactory {
 		return network;
 	}
 
-	private void addEdgeToNetwork(RoadNetwork network, Vertex in, Vertex out, double length, double speedLimit) {
+	private void addEdgeToNetwork(RoadNetwork network, Vertex in, Vertex out, double speedLimit) {
 		Edge edge;
-		edge = new Edge(length);
+		edge = new Edge(in.distance(out));
 		edge.setSpeedLimit(speedLimit);
 		network.addEdge(in, out, edge);
 	}
 
-	private void addTurnEdgeToNetwork(RoadNetwork network, Vertex in, Vertex out, double length) {
-		Edge edge;
-		edge = new Edge(length);
-		edge.setSpeedLimit(TURN_SPEED_LIMIT);
-		network.addEdge(in, out, edge);
+	private void addTurnEdgeToNetwork(RoadNetwork network, Vertex in, Vertex out) {
+		addEdgeToNetwork(network, in, out, TURN_SPEED_LIMIT);
 	}
 }
