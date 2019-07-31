@@ -2,13 +2,12 @@ package uk.ac.manchester.trafford.network;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.Function;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.interfaces.ShortestPathAlgorithm;
-import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
+import org.jgrapht.alg.shortestpath.AStarShortestPath;
 import org.jgrapht.graph.AsWeightedGraph;
 import org.jgrapht.graph.DefaultDirectedGraph;
 
@@ -129,7 +128,8 @@ public class RoadNetwork extends DefaultDirectedGraph<Vertex, Edge> implements M
 	}
 
 	public GraphPath<Vertex, Edge> getShortestPath(Vertex source, Vertex target) throws NodeNotFoundException {
-		ShortestPathAlgorithm<Vertex, Edge> shortestPath = new DijkstraShortestPath<Vertex, Edge>(getWeightedNetwork());
+		ShortestPathAlgorithm<Vertex, Edge> shortestPath = new AStarShortestPath<>(getWeightedNetwork(),
+				GridNetworkHeuristic.getInstance());
 		try {
 			return shortestPath.getPath(source, target);
 		} catch (IllegalArgumentException e) {
@@ -144,15 +144,7 @@ public class RoadNetwork extends DefaultDirectedGraph<Vertex, Edge> implements M
 	 */
 	private AsWeightedGraph<Vertex, Edge> getWeightedNetwork() {
 		AsWeightedGraph<Vertex, Edge> weightedNetwork = new AsWeightedGraph<Vertex, Edge>(this,
-				new Function<Edge, Double>() {
-
-					@Override
-					public Double apply(Edge edge) {
-
-						return edge.getLength() / edge.getSpeedLimit() + edge.getAverageJourneyTime();
-					}
-
-				}, false, false);
+				WeightCalculator.getInstance(), false, false);
 
 		return weightedNetwork;
 	}
