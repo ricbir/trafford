@@ -47,7 +47,7 @@ public class TimedTrafficLightTest {
 
 	@Test
 	public void testTimedTrafficLight() {
-		trafficLight = new TimedTrafficLight(GREEN_SECONDS, YELLOW_SECONDS, 2, network);
+		trafficLight = new TimedTrafficLight(0, GREEN_SECONDS, YELLOW_SECONDS, 2, network);
 
 		assertEquals(trafficLight.stages(), 2);
 		assertTrue(trafficLight.getController(0) instanceof EdgeAccessController);
@@ -66,7 +66,7 @@ public class TimedTrafficLightTest {
 
 	@Test
 	public void testSequence() {
-		trafficLight = new TimedTrafficLight(GREEN_SECONDS, YELLOW_SECONDS, 3, network);
+		trafficLight = new TimedTrafficLight(0, GREEN_SECONDS, YELLOW_SECONDS, 3, network);
 
 		for (int i = 0; i < GREEN_SECONDS * Constants.UPDATES_PER_SECOND; i++) {
 			trafficLight.update();
