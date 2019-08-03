@@ -35,6 +35,8 @@ public class AgentTest {
 	private ShortestPathAlgorithm<Segment, SegmentConnection> routingAlgorithm;
 	@Mock
 	private GraphPath<Segment, SegmentConnection> path;
+	@Mock
+	private IDMAccelerator accelerator;
 
 	private Segment startSegment = new Segment(Point.create(0, 0), Point.create(SEGMENT_LENGTH, 0));
 	private Segment middleSegment = new Segment(Point.create(SEGMENT_LENGTH, 0), Point.create(SEGMENT_LENGTH * 2, 0));
@@ -69,7 +71,7 @@ public class AgentTest {
 
 	@Test
 	public void testInitialize() {
-		agent = new Agent(network, routingAlgorithm, startPosition, destination);
+		agent = new Agent(network, startPosition, destination, routingAlgorithm, accelerator);
 		agent.setRoutingAlgorithm(routingAlgorithm);
 
 		verify(routingAlgorithm).getPath(startSegment, endSegment);
@@ -78,22 +80,22 @@ public class AgentTest {
 	}
 
 	@Test
-	public void testMove() throws DistanceOutOfBoundsException {
+	public void testMoveNoObstacle() throws DistanceOutOfBoundsException {
 		when(startPosition.add(anyDouble(), any())).thenReturn(otherPosition);
 		when(otherPosition.getSegment()).thenReturn(middleSegment);
 
-		agent = new Agent(network, routingAlgorithm, startPosition, destination);
+		agent = new Agent(network, startPosition, destination, routingAlgorithm, accelerator);
 		agent.update();
 
 		verify(startPosition).add(anyDouble(), eq(segmentList.subList(1, segmentList.size())));
 		assertSame(otherPosition, agent.getPosition());
 		verify(routingAlgorithm).getPath(middleSegment, endSegment);
-		assertFalse(agent.hasArrived());
+		verify(accelerator).getAcceleration(0, 30);
 	}
 
 	@Test
 	public void testHasArrived() {
-		agent = new Agent(network, routingAlgorithm, otherPosition, destination);
+		agent = new Agent(network, otherPosition, destination, routingAlgorithm, accelerator);
 
 		when(otherPosition.getSegment()).thenReturn(endSegment);
 		when(otherPosition.getDistance()).thenReturn(SEGMENT_LENGTH);

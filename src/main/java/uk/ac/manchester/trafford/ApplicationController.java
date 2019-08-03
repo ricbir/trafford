@@ -25,6 +25,7 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import javafx.scene.text.Text;
 import uk.ac.manchester.trafford.agent.Agent;
+import uk.ac.manchester.trafford.agent.IDMAccelerator;
 import uk.ac.manchester.trafford.agent.Position;
 import uk.ac.manchester.trafford.exceptions.DistanceOutOfBoundsException;
 import uk.ac.manchester.trafford.network.Point;
@@ -123,9 +124,11 @@ public class ApplicationController implements Initializable {
 
 		Agent agent;
 		try {
-			agent = new Agent(network, new DijkstraShortestPath<Segment, SegmentConnection>(network),
-					Position.create(new Segment(Point.create(0, 0), Point.create(0, 100)), 50),
-					Position.create(new Segment(Point.create(100, 200), Point.create(200, 200)), 50));
+			agent = new Agent(network, Position.create(new Segment(Point.create(0, 0), Point.create(0, 100)), 50),
+					Position.create(new Segment(Point.create(100, 200), Point.create(200, 200)), 50),
+					new DijkstraShortestPath<Segment, SegmentConnection>(network),
+					new IDMAccelerator(Constants.AGENT_ACCELERATION, Constants.AGENT_DECELERATION,
+							Constants.DESIRED_TIME_HEADWAY, Constants.MINIMUM_SPACING));
 
 			Circle agentSprite = new Circle(1, Color.DODGERBLUE);
 			simulationView.getChildren().add(agentSprite);
