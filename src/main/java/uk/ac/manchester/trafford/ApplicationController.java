@@ -1,33 +1,17 @@
 package uk.ac.manchester.trafford;
 
-import java.io.File;
 import java.net.URL;
 import java.util.ResourceBundle;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.jgrapht.io.DOTExporter;
-import org.jgrapht.io.GraphExporter;
+import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 
 import javafx.animation.AnimationTimer;
-import javafx.application.Platform;
-import javafx.beans.binding.Bindings;
-import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.Cursor;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
@@ -39,22 +23,16 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
-import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
-import javafx.stage.FileChooser;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
-import javafx.stage.StageStyle;
-import javafx.util.converter.NumberStringConverter;
 import uk.ac.manchester.trafford.agent.Agent;
-import uk.ac.manchester.trafford.agent.Agent.State;
 import uk.ac.manchester.trafford.agent.Position;
-import uk.ac.manchester.trafford.gui.TrafficLightPopupController;
+import uk.ac.manchester.trafford.exceptions.DistanceOutOfBoundsException;
+import uk.ac.manchester.trafford.network.Point;
 import uk.ac.manchester.trafford.network.RoadNetwork;
-import uk.ac.manchester.trafford.network.RoadNetworkFactory;
-import uk.ac.manchester.trafford.network.Vertex;
-import uk.ac.manchester.trafford.network.edge.Edge;
-import uk.ac.manchester.trafford.network.edge.TimedTrafficLight;
+import uk.ac.manchester.trafford.network.Segment;
+import uk.ac.manchester.trafford.network.SegmentConnection;
+import uk.ac.manchester.trafford.network.factories.RoadNetworkFactory;
+import uk.ac.manchester.trafford.network.factories.SimpleGridRoadNetworkFactory;
 
 public class ApplicationController implements Initializable {
 
@@ -68,9 +46,7 @@ public class ApplicationController implements Initializable {
 	private URL location;
 
 	@FXML
-	protected MenuBar menuBar;
-
-	private Canvas agentCanvas;
+	private MenuBar menuBar;
 
 	@FXML
 	private Pane simulationPane;
@@ -80,9 +56,6 @@ public class ApplicationController implements Initializable {
 
 	@FXML
 	private ToggleButton runButton;
-
-	private Renderer<Iterable<Agent>> renderer;
-	private RoadNetwork network;
 
 	@FXML
 	private TextField nAgentsField;
@@ -114,367 +87,73 @@ public class ApplicationController implements Initializable {
 	@FXML
 	private Text congestionCoefficient;
 
-	private IntegerProperty agentNumber = new SimpleIntegerProperty(1);
-	private IntegerProperty agentSpawnRate = new SimpleIntegerProperty(1);
+	private DoubleProperty scalingFactor = new SimpleDoubleProperty(1);
+	private DoubleProperty translateXProperty = new SimpleDoubleProperty(10);
+	private DoubleProperty translateYProperty = new SimpleDoubleProperty(10);
 
-	private double lastMouseX = 0;
-	private double lastMouseY = 0;
-
-	private DoubleProperty scalingFactor = new SimpleDoubleProperty(0.5);
-	private DoubleProperty translateXProperty = new SimpleDoubleProperty(0);
-	private DoubleProperty translateYProperty = new SimpleDoubleProperty(0);
+	private RoadNetwork network;
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
-		LOGGER.debug(">>> ENTER initialize (" + location + ", " + resources + ")");
-		Bindings.bindBidirectional(nAgentsField.textProperty(), agentNumber, new NumberStringConverter());
-		Bindings.bindBidirectional(spawnRateField.textProperty(), agentSpawnRate, new NumberStringConverter());
 
-		close.setOnAction(e -> {
-			Platform.exit();
-		});
-
-		agentSpeedField.setOnAction(e -> {
-			LOGGER.debug(">>> ENTER [agentSpeedField.onAction] (" + e + ")");
-			try {
-				network.setAgentSpeed(Double.parseDouble(agentSpeedField.getText()));
-			} catch (NumberFormatException nfe) {
-				LOGGER.info("Could not parse \"" + agentSpeedField.getText() + "\"", nfe);
-				agentSpeedField.setText(Double.toString(network.getAgentSpeed()));
-			}
-			LOGGER.debug("<<< EXIT [agentSpeedField.onAction]");
-		});
-
-		agentSpeedVariabilityField.setOnAction(e -> {
-			LOGGER.debug(">>> ENTER [agentSpeedVariabilityField.onAction] (" + e + ")");
-			try {
-				network.setAgentSpeedVariability(Double.parseDouble(agentSpeedVariabilityField.getText()) / 100);
-			} catch (NumberFormatException nfe) {
-				LOGGER.info("Could not parse \"" + agentSpeedVariabilityField.getText() + "\"", nfe);
-				agentSpeedVariabilityField.setText(Double.toString(network.getAgentSpeedVariability() * 100));
-			}
-			LOGGER.debug("<<< EXIT [agentSpeedField.onAction]");
-		});
-
-		greenTimeField.setOnAction(e -> {
-			LOGGER.debug(">>> ENTER [greenTimeField.onAction] (" + e + ")");
-			double seconds;
-			try {
-				seconds = Double.parseDouble(greenTimeField.getText());
-				for (TimedTrafficLight trafficLight : network.getTrafficLights()) {
-					trafficLight.setGreenTime(seconds);
-				}
-				System.out.println("GREEN TIME: " + seconds);
-			} catch (NumberFormatException nfe) {
-				LOGGER.info("Could not parse \"" + greenTimeField.getText() + "\"", nfe);
-				greenTimeField.setText(Double.toString(0));
-			}
-			LOGGER.debug("<<< EXIT [greenTimeField.onAction]");
-		});
-
-		yellowTimeField.setOnAction(e -> {
-			LOGGER.debug(">>> ENTER [yellowTimeField.onAction] (" + e + ")");
-			double seconds;
-			try {
-				seconds = Double.parseDouble(yellowTimeField.getText());
-				for (TimedTrafficLight trafficLight : network.getTrafficLights()) {
-					trafficLight.setYellowTime(seconds);
-				}
-			} catch (NumberFormatException nfe) {
-				LOGGER.info("Could not parse \"" + yellowTimeField.getText() + "\"", nfe);
-				yellowTimeField.setText(Double.toString(0));
-			}
-			LOGGER.debug("<<< EXIT [yellowTimeField.onAction]");
-		});
-
-		randomizeTimingsButton.setOnAction(e -> {
-			LOGGER.debug(">>> ENTER [randomizeTimingsButton.onAction] (" + e + ")");
-			for (TimedTrafficLight trafficLight : network.getTrafficLights()) {
-				trafficLight.setGreenTime(Math.random() * 60);
-			}
-			LOGGER.debug("<<< EXIT [randomizeTimingsButton.onAction]");
-		});
-
-		globalSpeedLimitField.setOnAction(e -> {
-			LOGGER.debug(">>> ENTER [globalSpeedLimitField.onAction] (" + e + ")");
-			double speedLimit;
-			try {
-				speedLimit = Double.parseDouble(globalSpeedLimitField.getText());
-				for (Edge edge : network.edgeSet()) {
-					edge.setSpeedLimit(speedLimit);
-					;
-				}
-			} catch (NumberFormatException nfe) {
-				LOGGER.info("Could not parse \"" + globalSpeedLimitField.getText() + "\"", nfe);
-				yellowTimeField.setText(Double.toString(0));
-			}
-			LOGGER.debug("<<< EXIT [globalSpeedLimitField.onAction]");
-		});
-
-		simulationPane.setOnScroll(e -> {
-			double scrollAmount = e.getDeltaY();
-			scalingFactor.set(scalingFactor.get() + scrollAmount * 0.005);
-		});
-
-		network = RoadNetworkFactory.getFactory().grid(8, 8, 100, 15);
-
-		Rectangle clipMask = new Rectangle();
-		clipMask.widthProperty().bind(simulationPane.widthProperty());
-		clipMask.heightProperty().bind(simulationPane.heightProperty());
-		simulationPane.setClip(clipMask);
+		RoadNetworkFactory factory = new SimpleGridRoadNetworkFactory(3, 3, 100);
+		network = factory.buildRoadNetwork();
 
 		Pane simulationView = new AnchorPane();
 		simulationView.scaleXProperty().bind(scalingFactor);
 		simulationView.scaleYProperty().bind(scalingFactor);
 		simulationView.translateXProperty().bind(translateXProperty);
 		simulationView.translateYProperty().bind(translateYProperty);
+		simulationPane.getChildren().add(simulationView);
 
-		// Draw edges
-		for (Edge edge : network.edgeSet()) {
-			Vertex source = network.getEdgeSource(edge);
-			Vertex target = network.getEdgeTarget(edge);
+		for (Segment segment : network.vertexSet()) {
+			Point source = segment.getSource();
+			Point target = segment.getTarget();
 			Line roadSegment = new Line();
-			roadSegment.startXProperty().bind(source.getXProperty());
-			roadSegment.startYProperty().bind(source.getYProperty());
-			roadSegment.endXProperty().bind(target.getXProperty());
-			roadSegment.endYProperty().bind(target.getYProperty());
+			roadSegment.setStartX(source.getX());
+			roadSegment.setStartY(source.getY());
+
+			roadSegment.setEndX(target.getX());
+			roadSegment.setEndY(target.getY());
 			roadSegment.setStroke(Color.LIGHTGREY);
 			roadSegment.setStrokeWidth(2.5);
 
 			simulationView.getChildren().add(roadSegment);
 		}
 
-		agentCanvas = new Canvas(0, 0);
-		agentCanvas.widthProperty().bind(simulationView.widthProperty());
-		agentCanvas.heightProperty().bind(simulationView.heightProperty());
-		simulationView.getChildren().add(agentCanvas);
-
-		// Draw traffic light
-		for (Edge edge : network.edgeSet()) {
-			if (edge.getAccessController() instanceof TimedTrafficLight.AccessController) {
-				Circle trafficLight = new Circle(1.5, Color.RED);
-
-				Vertex source = network.getEdgeSource(edge);
-				Vertex target = network.getEdgeTarget(edge);
-
-				// Draw it on the right-hand side of the segment
-				DoubleBinding xOffset = source.getYProperty().subtract(target.getYProperty()).divide(edge.getLength())
-						.multiply(4);
-				DoubleBinding yOffset = target.getXProperty().subtract(source.getXProperty()).divide(edge.getLength())
-						.multiply(4);
-				trafficLight.centerXProperty().bind(target.getXProperty().add(xOffset.subtract(yOffset)));
-				trafficLight.centerYProperty().bind(target.getYProperty().add(yOffset.add(xOffset)));
-
-				edge.getAccessController().getObservableState().addListener((observable, oldValue, newValue) -> {
-					switch (newValue) {
-					case TL_GREEN:
-						trafficLight.setFill(Color.LIMEGREEN);
-						break;
-					case TL_RED:
-						trafficLight.setFill(Color.RED);
-						break;
-					case TL_YELLOW:
-						trafficLight.setFill(Color.GOLDENROD);
-						break;
-					default:
-						break;
-					}
-				});
-
-				Circle clickableArea = new Circle(4, Color.TRANSPARENT);
-				clickableArea.centerXProperty().bind(trafficLight.centerXProperty());
-				clickableArea.centerYProperty().bind(trafficLight.centerYProperty());
-				clickableArea.setCursor(Cursor.HAND);
-				clickableArea.setOnMouseClicked((e) -> {
-					try {
-						TrafficLightPopupController controller = new TrafficLightPopupController(
-								edge.getTrafficLight());
-						FXMLLoader loader = new FXMLLoader(getClass().getResource("trafficlightconf.fxml"));
-						// Parent root = FXMLLoader.load(getClass().getResource("main.fxml"));
-						loader.setController(controller);
-						Parent root1 = (Parent) loader.load();
-						Stage stage = new Stage();
-						stage.initModality(Modality.APPLICATION_MODAL);
-						stage.initStyle(StageStyle.UNIFIED);
-						stage.setResizable(false);
-						stage.setTitle("Trafficlight");
-						stage.setScene(new Scene(root1));
-						stage.show();
-					} catch (Exception ex) {
-						LOGGER.error(ex, ex);
-					}
-				});
-
-				simulationView.getChildren().add(trafficLight);
-				simulationView.getChildren().add(clickableArea);
-			}
-		}
-
-		simulationPane.setOnMousePressed(e -> {
-			LOGGER.debug(">>> ENTER [simulationPane.setOnMousePressed] (" + e + ")");
-			lastMouseX = e.getX();
-			lastMouseY = e.getY();
-			simulationPane.setCursor(Cursor.CLOSED_HAND);
-			LOGGER.debug("<<< EXIT [simulationPane.setOnMousePressed]");
-		});
-
-		simulationPane.setOnMouseDragged(e -> {
-			translateXProperty.set(translateXProperty.get() + e.getX() - lastMouseX);
-			translateYProperty.set(translateYProperty.get() + e.getY() - lastMouseY);
-			lastMouseX = e.getX();
-			lastMouseY = e.getY();
-		});
-
-		simulationPane.setOnMouseReleased(e -> {
-			LOGGER.debug(">>> ENTER [simulationPane.setOnMousePressed] (" + e + ")");
-			simulationPane.setCursor(Cursor.OPEN_HAND);
-			LOGGER.debug("<<< EXIT [simulationPane.setOnMousePressed]");
-		});
-
-		simulationPane.setCursor(Cursor.OPEN_HAND);
-
-		simulationPane.getChildren().add(simulationView);
-
-		renderer = new Renderer<Iterable<Agent>>() {
-			@Override
-			public void render(GraphicsContext gc, Iterable<Agent> agents) {
-				gc.clearRect(0, 0, gc.getCanvas().getWidth(), gc.getCanvas().getHeight());
-				gc.save();
-
-				gc.setFill(Color.DODGERBLUE);
-				for (Agent agent : agents) {
-					Vertex point = network.getCoordinates(agent);
-					if (point != null) {
-						gc.fillRect(point.getX() - 1, point.getY() - 1, 2, 2);
-					}
-				}
-				gc.restore();
-			}
-		};
-
-		new AnimationTimer() {
-
-			private Edge[] edges = new Edge[1];
-			private long lastUpdateTime = System.nanoTime();
-
-			@Override
-			public void handle(long now) {
-				long timeBetweenUpdates;
-
-				while (now - lastUpdateTime > (timeBetweenUpdates = (long) (Constants.NANOSECONDS_PER_SECOND
-						/ Constants.UPDATES_PER_SECOND / speedSlider.getValue()))) {
-					if (runButton.isSelected()) {
-						for (int i = 0; (i < Math.min(agentNumber.get() - network.getNumberOfAgents(),
-								agentSpawnRate.get())); i++) {
-							edges = network.edgeSet().toArray(edges);
-							int startEdgeIndex = (int) (Math.random() * edges.length);
-							int targetEdgeIndex;
-							do {
-								targetEdgeIndex = (int) (Math.random() * edges.length);
-							} while (targetEdgeIndex == startEdgeIndex);
-
-							Agent agent = network.createAgent(
-									new Position(edges[startEdgeIndex],
-											edges[startEdgeIndex].getLength() * Math.random()),
-									new Position(edges[targetEdgeIndex],
-											edges[targetEdgeIndex].getLength() * Math.random()));
-
-							if (agent != null) {
-
-								Circle agentSprite = new Circle(1, Color.DODGERBLUE);
-								agentSprite.centerXProperty().bind(agent.getPosition().getXProperty());
-								agentSprite.centerYProperty().bind(agent.getPosition().getYProperty());
-								simulationView.getChildren().add(agentSprite);
-
-								// Remove agent sprite if agent arrives at destination
-								agent.getStateProperty().addListener((o, oldState, newState) -> {
-									if (newState == State.AT_DESTINATION) {
-										agentSprite.centerXProperty().unbind();
-										agentSprite.centerYProperty().unbind();
-										simulationView.getChildren().remove(agentSprite);
-									}
-								});
-							}
-						}
-
-						network.update();
-					}
-					lastUpdateTime += timeBetweenUpdates;
-				}
-				congestionCoefficient.setText(String.format("%.4f", network.getAverageCongestion()));
-			}
-
-		}.start();
-
-		LOGGER.debug("<<< EXIT initialize");
-	}
-
-	/**
-	 * Show an alert with given data
-	 * 
-	 * @param title
-	 * @param header
-	 * @param content
-	 */
-	public static void showMessage(String title, String header, String content) {
-		LOGGER.debug(">>> ENTER [showMessage]");
-		Alert alert = new Alert(AlertType.INFORMATION);
-		alert.setTitle(title);
-		alert.setHeaderText(header);
-		alert.setContentText(content);
-		alert.showAndWait();
-		LOGGER.debug("<<< EXT [showMessage]");
-	}
-
-	@FXML
-	private void handleMenuOpenAction(ActionEvent event) {
-		LOGGER.debug(">>> ENTER [handleMenuOpenAction]");
-		// If running this action cannot be executed
-		if (runButton.isSelected()) {
-			showMessage("WARNING", "Action error", "Cannot open network while the simulation is running.");
-			LOGGER.debug("<<< EXIT [handleMenuOpenAction]");
-			return;
-		}
-
-		FileChooser fileChooser = new FileChooser();
-		fileChooser.setTitle("Open Resource File");
-		File file = fileChooser.showOpenDialog(simulationPane.getScene().getWindow());
-
-		LOGGER.debug("Opening file [" + file + "]");
-
+		Agent agent;
 		try {
-			network = RoadNetworkFactory.getFactory().importFromFile(file);
-		} catch (Exception ex) {
-			LOGGER.error(ex, ex);
+			agent = new Agent(network, new DijkstraShortestPath<Segment, SegmentConnection>(network),
+					Position.create(new Segment(Point.create(0, 0), Point.create(0, 100)), 50),
+					Position.create(new Segment(Point.create(100, 200), Point.create(200, 200)), 50));
+
+			Circle agentSprite = new Circle(1, Color.DODGERBLUE);
+			simulationView.getChildren().add(agentSprite);
+
+			AnimationTimer timer = new AnimationTimer() {
+
+				private long lastUpdateTime = System.nanoTime();
+
+				@Override
+				public void handle(long now) {
+					long timeBetweenUpdates;
+
+					while (now - lastUpdateTime > (timeBetweenUpdates = (long) (Constants.NANOSECONDS_PER_SECOND
+							/ Constants.UPDATES_PER_SECOND / speedSlider.getValue()))) {
+
+						agent.update();
+						agentSprite.setCenterX(agent.getX());
+						agentSprite.setCenterY(agent.getY());
+						lastUpdateTime += timeBetweenUpdates;
+					}
+					// congestionCoefficient.setText(String.format("%.4f",
+					// network.getAverageCongestion()));
+				}
+			};
+
+			timer.start();
+		} catch (DistanceOutOfBoundsException e) {
+			e.printStackTrace();
 		}
-
-		LOGGER.debug("<<< EXIT [handleMenuOpenAction]");
-	}
-
-	@FXML
-	private void handleMenuSaveAction(ActionEvent event) {
-		LOGGER.debug(">>> ENTER [handleMenuSaveAction]");
-		if (runButton.isSelected()) {
-			showMessage("WARNING", "Action error", "Cannot save network while the simulation is running.");
-			LOGGER.debug("<<< EXIT [handleMenuOpenAction]");
-			return;
-		}
-
-		FileChooser fileChooser = new FileChooser();
-		fileChooser.setTitle("Open Resource File");
-		fileChooser.setInitialFileName("graph.dot");
-		File file = fileChooser.showSaveDialog(simulationPane.getScene().getWindow());
-
-		LOGGER.debug("Saving to file [" + file + "]");
-
-		try {
-			GraphExporter<Vertex, Edge> exporter = new DOTExporter<>(Vertex.idProvider(), Vertex.labelProvider(), null,
-					Vertex.attributeProvider(), Edge.attributeProvider());
-			exporter.exportGraph(network, file);
-		} catch (Exception ex) {
-			LOGGER.error(ex);
-		}
-
-		LOGGER.debug("<<< EXIT [handleMenuSaveAction]");
 	}
 }
