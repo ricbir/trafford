@@ -1,10 +1,5 @@
 package uk.ac.manchester.trafford.network;
 
-import java.util.SortedSet;
-import java.util.TreeSet;
-
-import uk.ac.manchester.trafford.agent.Agent;
-
 public class Segment {
 	private final Point source;
 	private final Point target;
@@ -12,8 +7,6 @@ public class Segment {
 
 	private final double cosine;
 	private final double sine;
-
-	private SortedSet<Agent> agents = new TreeSet<Agent>();
 
 	public Segment(Point source, Point target) {
 		this.source = source;
@@ -78,10 +71,6 @@ public class Segment {
 		} else if (!target.equals(other.target))
 			return false;
 		return true;
-	}
-
-	SortedSet<Agent> getAgents() {
-		return agents;
 	}
 
 }

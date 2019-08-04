@@ -5,7 +5,6 @@ import java.util.ResourceBundle;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 
 import javafx.animation.AnimationTimer;
 import javafx.beans.property.DoubleProperty;
@@ -25,13 +24,9 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import javafx.scene.text.Text;
 import uk.ac.manchester.trafford.agent.Agent;
-import uk.ac.manchester.trafford.agent.IDMAccelerator;
-import uk.ac.manchester.trafford.agent.Position;
-import uk.ac.manchester.trafford.exceptions.DistanceOutOfBoundsException;
 import uk.ac.manchester.trafford.network.Point;
 import uk.ac.manchester.trafford.network.RoadNetwork;
 import uk.ac.manchester.trafford.network.Segment;
-import uk.ac.manchester.trafford.network.SegmentConnection;
 import uk.ac.manchester.trafford.network.factories.RoadNetworkFactory;
 import uk.ac.manchester.trafford.network.factories.SimpleGridRoadNetworkFactory;
 
@@ -123,40 +118,32 @@ public class ApplicationController implements Initializable {
 		}
 
 		Agent agent;
-		try {
-			agent = new Agent(network, Position.create(new Segment(Point.create(0, 0), Point.create(0, 100)), 50),
-					Position.create(new Segment(Point.create(100, 200), Point.create(200, 200)), 50),
-					new DijkstraShortestPath<Segment, SegmentConnection>(network),
-					new IDMAccelerator(Constants.AGENT_ACCELERATION, Constants.AGENT_DECELERATION,
-							Constants.DESIRED_TIME_HEADWAY, Constants.MINIMUM_SPACING));
+		agent = network.spawnAgent();
 
-			Circle agentSprite = new Circle(1, Color.DODGERBLUE);
-			simulationView.getChildren().add(agentSprite);
+		Circle agentSprite = new Circle(1, Color.DODGERBLUE);
+		simulationView.getChildren().add(agentSprite);
 
-			AnimationTimer timer = new AnimationTimer() {
+		AnimationTimer timer = new AnimationTimer() {
 
-				private long lastUpdateTime = System.nanoTime();
+			private long lastUpdateTime = System.nanoTime();
 
-				@Override
-				public void handle(long now) {
-					long timeBetweenUpdates;
+			@Override
+			public void handle(long now) {
+				long timeBetweenUpdates;
 
-					while (now - lastUpdateTime > (timeBetweenUpdates = (long) (Constants.NANOSECONDS_PER_SECOND
-							/ Constants.UPDATES_PER_SECOND / speedSlider.getValue()))) {
+				while (now - lastUpdateTime > (timeBetweenUpdates = (long) (Constants.NANOSECONDS_PER_SECOND
+						/ Constants.UPDATES_PER_SECOND / speedSlider.getValue()))) {
 
-						agent.update();
-						agentSprite.setCenterX(agent.getX());
-						agentSprite.setCenterY(agent.getY());
-						lastUpdateTime += timeBetweenUpdates;
-					}
-					// congestionCoefficient.setText(String.format("%.4f",
-					// network.getAverageCongestion()));
+					agent.update();
+					agentSprite.setCenterX(agent.getX());
+					agentSprite.setCenterY(agent.getY());
+					lastUpdateTime += timeBetweenUpdates;
 				}
-			};
+				// congestionCoefficient.setText(String.format("%.4f",
+				// network.getAverageCongestion()));
+			}
+		};
 
-			timer.start();
-		} catch (DistanceOutOfBoundsException e) {
-			e.printStackTrace();
-		}
+		timer.start();
 	}
 }

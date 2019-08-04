@@ -5,6 +5,7 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -19,6 +20,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import uk.ac.manchester.trafford.Constants;
 import uk.ac.manchester.trafford.exceptions.DistanceOutOfBoundsException;
 import uk.ac.manchester.trafford.network.Point;
 import uk.ac.manchester.trafford.network.RoadNetwork;
@@ -37,6 +39,8 @@ public class AgentTest {
 	private GraphPath<Segment, SegmentConnection> path;
 	@Mock
 	private IDMAccelerator accelerator;
+	@Mock
+	private LeaderFinder finder;
 
 	private Segment startSegment = new Segment(Point.create(0, 0), Point.create(SEGMENT_LENGTH, 0));
 	private Segment middleSegment = new Segment(Point.create(SEGMENT_LENGTH, 0), Point.create(SEGMENT_LENGTH * 2, 0));
@@ -52,6 +56,7 @@ public class AgentTest {
 	private List<Segment> segmentList = new ArrayList<>(3);
 
 	private Agent agent;
+	private Agent leader;
 
 	@Before
 	public void setUp() throws Exception {
@@ -71,7 +76,7 @@ public class AgentTest {
 
 	@Test
 	public void testInitialize() {
-		agent = new Agent(network, startPosition, destination, routingAlgorithm, accelerator);
+		agent = new Agent(network, startPosition, destination, accelerator, routingAlgorithm, finder);
 		agent.setRoutingAlgorithm(routingAlgorithm);
 
 		verify(routingAlgorithm).getPath(startSegment, endSegment);
@@ -80,22 +85,80 @@ public class AgentTest {
 	}
 
 	@Test
-	public void testMoveNoObstacle() throws DistanceOutOfBoundsException {
+	public void testPositionChange() throws DistanceOutOfBoundsException {
 		when(startPosition.add(anyDouble(), any())).thenReturn(otherPosition);
-		when(otherPosition.getSegment()).thenReturn(middleSegment);
 
-		agent = new Agent(network, startPosition, destination, routingAlgorithm, accelerator);
+		agent = new Agent(network, startPosition, destination, accelerator, routingAlgorithm, finder);
 		agent.update();
 
 		verify(startPosition).add(anyDouble(), eq(segmentList.subList(1, segmentList.size())));
 		assertSame(otherPosition, agent.getPosition());
-		verify(routingAlgorithm).getPath(middleSegment, endSegment);
+	}
+
+	@Test
+	public void testFindLeader() throws DistanceOutOfBoundsException {
+		leader = new Agent(network, otherPosition, destination, accelerator, routingAlgorithm, finder);
+
+		when(finder.findLeader(anyList(), anyDouble(), anyDouble())).thenReturn(leader);
+		when(startPosition.getDistance()).thenReturn(50.);
+
+		agent = new Agent(network, startPosition, destination, accelerator, routingAlgorithm, finder);
+		agent.update();
+
+		verify(finder).findLeader(segmentList, 50, 50 + Constants.LOOK_AHEAD_DISTANCE);
+	}
+
+	@Test
+	public void testMoveDestinationFar() throws DistanceOutOfBoundsException {
+		when(startPosition.distanceTo(eq(destination), any())).thenReturn(200.);
+
+		agent = new Agent(network, startPosition, destination, accelerator, routingAlgorithm, finder);
+		agent.update();
+
 		verify(accelerator).getAcceleration(0, 30);
 	}
 
 	@Test
+	public void testMoveDestinationClose() throws DistanceOutOfBoundsException {
+		when(startPosition.distanceTo(eq(destination), any())).thenReturn(30.);
+
+		agent = new Agent(network, startPosition, destination, accelerator, routingAlgorithm, finder);
+		agent.update();
+
+		verify(accelerator).getAcceleration(0, 30, 30 + Constants.MINIMUM_SPACING, 0);
+	}
+
+	@Test
+	public void testMoveLeaderFar() throws DistanceOutOfBoundsException {
+		leader = new Agent(network, otherPosition, destination, accelerator, routingAlgorithm, finder);
+
+		when(finder.findLeader(anyList(), anyDouble(), anyDouble())).thenReturn(leader);
+		when(startPosition.distanceTo(eq(destination), any())).thenReturn(Constants.LOOK_AHEAD_DISTANCE);
+		when(startPosition.distanceTo(eq(otherPosition), any())).thenReturn(Constants.LOOK_AHEAD_DISTANCE);
+
+		agent = new Agent(network, startPosition, destination, accelerator, routingAlgorithm, finder);
+		agent.update();
+
+		verify(accelerator).getAcceleration(0, 30);
+	}
+
+	@Test
+	public void testMoveLeaderClose() throws DistanceOutOfBoundsException {
+		leader = new Agent(network, otherPosition, destination, accelerator, routingAlgorithm, finder);
+
+		when(finder.findLeader(anyList(), anyDouble(), anyDouble())).thenReturn(leader);
+		when(startPosition.distanceTo(eq(destination), any())).thenReturn(Constants.LOOK_AHEAD_DISTANCE);
+		when(startPosition.distanceTo(eq(otherPosition), any())).thenReturn(30.);
+
+		agent = new Agent(network, startPosition, destination, accelerator, routingAlgorithm, finder);
+		agent.update();
+
+		verify(accelerator).getAcceleration(0, 30, 30, 0);
+	}
+
+	@Test
 	public void testHasArrived() {
-		agent = new Agent(network, otherPosition, destination, routingAlgorithm, accelerator);
+		agent = new Agent(network, otherPosition, destination, accelerator, routingAlgorithm, finder);
 
 		when(otherPosition.getSegment()).thenReturn(endSegment);
 		when(otherPosition.getDistance()).thenReturn(SEGMENT_LENGTH);

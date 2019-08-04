@@ -1,5 +1,7 @@
 package uk.ac.manchester.trafford.agent;
 
+import uk.ac.manchester.trafford.Constants;
+
 public class IDMAccelerator {
 
 	private static final double DELTA_COEFFICIENT = 4;
@@ -15,6 +17,11 @@ public class IDMAccelerator {
 		this.decelerationCoefficient = decelerationCoefficient;
 		this.desiredTimeHeadway = desiredTimeHeadway;
 		this.minimumSpacing = minimumSpacing;
+	}
+
+	public IDMAccelerator() {
+		this(Constants.AGENT_ACCELERATION, Constants.AGENT_DECELERATION, Constants.DESIRED_TIME_HEADWAY,
+				Constants.MINIMUM_SPACING);
 	}
 
 	/**

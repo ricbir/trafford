@@ -21,6 +21,8 @@ public class Constants {
 	 */
 	public static final double DESIRED_TIME_HEADWAY = 1;
 
+	public static final double LOOK_AHEAD_DISTANCE = 200;
+
 	public static final double LANE_WIDTH = 3;
 
 	public static final double RENDER_SCALING_FACTOR = 0.01;

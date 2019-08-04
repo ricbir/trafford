@@ -32,7 +32,7 @@ public class PositionTest {
 	@Mock
 	private Segment thirdSegment;
 
-	private List<Segment> followingSegments;
+	private List<Segment> segmentPath;
 
 	private StringWriter sw = new StringWriter();
 	private PrintWriter pw = new PrintWriter(sw);
@@ -45,7 +45,7 @@ public class PositionTest {
 		when(secondSegment.getLength()).thenReturn(SEGMENT_LENGTH);
 		when(thirdSegment.getLength()).thenReturn(SEGMENT_LENGTH);
 
-		followingSegments = Arrays.asList(secondSegment, thirdSegment);
+		segmentPath = Arrays.asList(firstSegment, secondSegment, thirdSegment);
 	}
 
 	@Test
@@ -116,7 +116,7 @@ public class PositionTest {
 		double delta = SEGMENT_LENGTH / 2;
 
 		try {
-			position = position.add(delta, followingSegments);
+			position = position.add(delta, segmentPath);
 		} catch (DistanceOutOfBoundsException e) {
 			exceptionFail(e);
 		}
@@ -133,7 +133,7 @@ public class PositionTest {
 		double delta = SEGMENT_LENGTH + SEGMENT_LENGTH / 2;
 
 		try {
-			position = position.add(delta, followingSegments);
+			position = position.add(delta, segmentPath);
 		} catch (DistanceOutOfBoundsException e) {
 			exceptionFail(e);
 		}
@@ -149,7 +149,7 @@ public class PositionTest {
 		double delta = SEGMENT_LENGTH * 2 + SEGMENT_LENGTH / 2;
 
 		try {
-			position = position.add(delta, followingSegments);
+			position = position.add(delta, segmentPath);
 		} catch (DistanceOutOfBoundsException e) {
 			exceptionFail(e);
 		}
@@ -165,12 +165,21 @@ public class PositionTest {
 		double delta = SEGMENT_LENGTH * 3 + SEGMENT_LENGTH / 2;
 
 		try {
-			position = position.add(delta, followingSegments);
+			position = position.add(delta, segmentPath);
 			fail();
 		} catch (DistanceOutOfBoundsException e) {
 
 		}
 
+	}
+
+	@Test
+	public void testDistanceTo() throws DistanceOutOfBoundsException {
+		Position position = Position.create(firstSegment, 50);
+
+		assertEquals(20, position.distanceTo(Position.create(firstSegment, 70), segmentPath), 0.0001);
+		assertEquals(100, position.distanceTo(Position.create(secondSegment, 50), segmentPath), 0.0001);
+		assertEquals(200, position.distanceTo(Position.create(thirdSegment, 50), segmentPath), 0.0001);
 	}
 
 	@Test
